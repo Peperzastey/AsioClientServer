@@ -4,7 +4,7 @@
 #include <iostream>
 
 /// Contains common utility functions.
-namespace cs::common::util {
+namespace acs::util {
 
 inline void log(const std::string &message, std::ostream &out = std::cout) {
     out << message << std::endl;

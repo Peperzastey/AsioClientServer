@@ -1,11 +1,10 @@
-#include "core/Application.hpp"
-#include "conn/tcp/AsyncTcpServer.hpp"
+#include "acs/conn/AsyncTcpServer.hpp"
+#include <asio/io_context.hpp>
 #include <system_error>
 #include <iostream>
 #include <cstdlib>
 
-using namespace cs; //TODO cs::common
-using namespace cs::server;
+using namespace acs;
 
 constexpr unsigned short DEFAULT_PORT = 54321;
 
@@ -14,7 +13,7 @@ constexpr unsigned short DEFAULT_PORT = 54321;
  * \todo use argv for \a portNumber and \a service
  */
 int main(int argc, char *argv[]) {
-    auto& app = core::Application::instance();
+    asio::io_context context{};
 
     auto portNum = DEFAULT_PORT;
     if (argc > 1) {
@@ -23,8 +22,8 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        conn::tcp::AsyncTcpServer tcpServer(app, portNum, "daytime");
-        app.run();
+        conn::AsyncTcpServer tcpServer(context, portNum, "daytime");
+        context.run();
     } catch (const std::system_error &err) {
         std::cerr << "EXCEPTION CAUGHT:\n"
                 << err.code() << ": " << err.what()

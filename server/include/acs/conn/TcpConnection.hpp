@@ -1,11 +1,11 @@
 /** \file
  *  \brief Definition of the \a TcpConnection class.
  */
-#ifndef TCPCONNECTION_HPP__
-#define TCPCONNECTION_HPP__
+#ifndef ACS_TCPCONNECTION_HPP__
+#define ACS_TCPCONNECTION_HPP__
 
-#include "conn/ConnectionStateListener.hpp"
-#include "util/SimpleLogger.hpp"
+#include "acs/conn/ConnectionStateListener.hpp"
+#include "acs/util/SimpleLogger.hpp"
 #include <memory>
 #include <utility>
 #include <string>
@@ -18,16 +18,14 @@
 #include "chat.pb.h"
 
 /// Contains server-side TCP connection functionality.
-namespace cs::server::conn::tcp {
-
-using namespace cs::common;
+namespace acs::conn {
 
 static std::string default_response_factory([[maybe_unused]] std::string_view request) {
     return "Default Response.";
 }
 
 static std::string chat_proto_response_factory([[maybe_unused]] std::string_view request) {
-    using namespace ::cs::common::conn::protocol;
+    using namespace proto;
     ChatMessage message{};
     message.set_id(6);
     message.set_text("Test text\nNext test line.\n");
@@ -44,8 +42,6 @@ static std::string chat_proto_response_factory([[maybe_unused]] std::string_view
 /// Represents server-side part of a TCP connection.
 class TcpConnection {
 public:
-    /// Typedef for pointer holding the sole ownership of an object of this class.
-    using upointer = std::unique_ptr<TcpConnection>;
     /// Response factory function type typedef.
     /**
      * \todo function address/pointer ? std::string(*)(std::string_view)
@@ -151,6 +147,6 @@ inline std::ostream& operator<<(std::ostream &out, const TcpConnection &connecti
     return out << "Connection(id= " << connection.getId() << " )";
 }
 
-} // namespace cs::server::conn::tcp
+} // namespace acs::conn
 
-#endif // TCPCONNECTION_HPP__
+#endif // ACS_TCPCONNECTION_HPP__

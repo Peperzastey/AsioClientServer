@@ -1,13 +1,12 @@
-#include "AsyncTcpServer.hpp"
+#include "acs/conn/AsyncTcpServer.hpp"
 
-#include "core/Application.hpp"
-#include "TcpConnection.hpp"
-#include "util/SimpleLogger.hpp"
+#include "acs/conn/TcpConnection.hpp"
+#include "acs/util/SimpleLogger.hpp"
 
-namespace cs::server::conn::tcp {
+namespace acs::conn {
 
-AsyncTcpServer::AsyncTcpServer(Application &app, port_t portNumber, [[maybe_unused]] const std::string &service)
-    : _app(app), _acceptor(_app.getContext(), asio::ip::tcp::endpoint(ipVersion(), portNumber)) {
+AsyncTcpServer::AsyncTcpServer(asio::io_context &ioContext, port_t portNumber, const std::string &service)
+    : _acceptor(ioContext, asio::ip::tcp::endpoint(ipVersion(), portNumber)) {
     startAccept();
 }
 
@@ -31,4 +30,4 @@ void AsyncTcpServer::handleAccept(TcpConnection& connection, const std::error_co
     startAccept();
 }
 
-} // namespace cs::server::conn::tcp
+} // namespace acs::conn

@@ -1,18 +1,16 @@
-#ifndef CONNECTION_MANAGER_HPP__
-#define CONNECTION_MANAGER_HPP__
+#ifndef ACS_CONNECTION_MANAGER_HPP__
+#define ACS_CONNECTION_MANAGER_HPP__
 
-#include "ConnectionStateListener.hpp"
-#include "util/SimpleLogger.hpp"
+#include "acs/conn/ConnectionStateListener.hpp"
+#include "acs/util/SimpleLogger.hpp"
 #include <list>
 #include <ostream>
 
 namespace asio {
 class io_context;
-}
+} // namespace asio
 
-namespace cs::server::conn {
-
-using namespace cs::common;
+namespace acs::conn {
 
 /// Manages and holds owership of the connections.
 /**
@@ -23,14 +21,8 @@ class ConnectionManager final : public ConnectionStateListener {
 public:
     /// Create and add new connection.
     /**
-     * \return new created connection
-     * \todo newConnection(Connection&&) overload/method ?
+     * \return created connection
      */
-    template <typename... Args>
-    Connection& template_newConnection(Args&&... args) {
-        return _connections.emplace_back(std::forward<Args>(args)...);
-    }
-
     Connection& newConnection(asio::io_context &ioContext) {
         return _connections.emplace_back(ioContext, *this);
     }
@@ -82,6 +74,6 @@ private:
     std::list<Connection> _connections;
 };
 
-} // namespace cs::server::conn
+} // namespace acs::conn
 
-#endif // CONNECTION_MANAGER_HPP__
+#endif // ACS_CONNECTION_MANAGER_HPP__

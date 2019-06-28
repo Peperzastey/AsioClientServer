@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package cs.common.conn.protocol;
+package acs.proto;
 
 message ChatMessage {
     /*required <-proto2*/ int32 id = 1;

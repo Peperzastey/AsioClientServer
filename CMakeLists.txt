@@ -1,91 +1,125 @@
-cmake_minimum_required (VERSION 3.5)
-project (AsioTest)
+cmake_minimum_required (VERSION 3.1...3.14)
+project (AsioClientServer) #TODO add version
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
-set(CMAKE_CXX_FLAGS -DASIO_STANDALONE)
+# use standalone Asio (without Boost dependencies)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DASIO_STANDALONE")
 
-set(commonPrefix common/src/main)
-set(clientPrefix client/src/main)
-set(serverPrefix server/src/main)
+# Asio
+set(ASIO_INC_DIR /home/przemek/Dirs/libs/asio-1.12.2/include)
 
-include_directories(/home/przemek/Dirs/libs/asio-1.12.2/include)
-include_directories(
-    ${commonPrefix}
-)
-
-# protobuf
+# Protobuf
 # find the protobuf compiler and libraries
 find_package(Protobuf REQUIRED)
-# check if protobuf was found
-if(PROTOBUF_FOUND)
+if(Protobuf_FOUND)
     message ("Protobuf found")
 else()
-    message(FATAL_ERROR "Cannot find Protobuf")
+    message (FATAL_ERROR "Cannot find Protobuf")
 endif()
 
-# # protobufTest
-# # generate the .h and .cc files
-# PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS protobufTest/AddressBook.proto)
-# # print path to generated files
-# message ("PROTO_SRCS = ${PROTO_SRCS}")
-# message ("PROTO_HDRS = ${PROTO_HDRS}")
-# # add a test executable
-# add_executable(protobuf_example
-#     protobufTest/main.cpp
-#     ${PROTO_SRCS}
-#     ${PROTO_HDRS}
-# )
-# target_include_directories(protobuf_example
-#     PUBLIC
-#     ${PROTOBUF_INCLUDE_DIRS}
-#     ${CMAKE_CURRENT_BINARY_DIR}
-# )
-# # link the exe against the Protobuf libraries
-# target_link_libraries(protobuf_example
-#     PUBLIC
-#     ${PROTOBUF_LIBRARIES}
-# )
-
-# tests:common
-set(testSources
-    common/src/test/TimerTest.cpp
-    common/src/test/util/SimpleLoggerTest.cpp
-)
-add_executable(tests ${testSources})
-target_link_libraries(tests gmock_main pthread)
+#TODO find GTest and GMock
 
 # common
-set(protoFiles
-    common/src/main/conn/protocol/chat.proto)
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${protoFiles})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#TODO add_custom_command ? (some sort of target)
+set(PROTO_FILES
+    common/proto/chat.proto
+    )
+# add_custom_command() + DEPENDS ${PROTO_FILES}?
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
+add_custom_target(generate_proto
+    DEPENDS ${PROTO_SRCS} ${PROTO_HDRS})
+#TODO change destination dir
+set(PROTO_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # client
-set(clientSources
-    ${clientPrefix}/main.cpp
-    ${clientPrefix}/conn/tcp/SyncTcpClient.cpp
+set(CLIENT_SRC
+    client/src/main.cpp
+    client/src/conn/SyncTcpClient.cpp
+    client/include/acs/conn/SyncTcpClient.hpp
     ${PROTO_SRCS}
+    ${PROTO_HDRS}
 )
-#target_sources()
-add_executable(csClient ${clientSources})
-target_include_directories(csClient PRIVATE ${clientPrefix})
-target_link_libraries(csClient pthread ${PROTOBUF_LIBRARIES})
+add_executable(client ${CLIENT_SRC})
+target_include_directories(client
+    PRIVATE
+    client/include
+    common/include
+    ${ASIO_INC_DIR}
+    ${PROTO_GEN_DIR}
+    )
+target_link_libraries(client pthread ${PROTOBUF_LIBRARIES})
+add_dependencies(client generate_proto)
 
 # server
-set(serverSources
-    ${serverPrefix}/main.cpp
-    ${serverPrefix}/conn/tcp/AsyncTcpServer.cpp
-    ${PROTO_SRCS} ${PROTO_HDRS}
-)
-#target_sources()
-add_executable(csServer ${serverSources})
-target_include_directories(csServer PRIVATE ${serverPrefix})
+set(SERVER_SRC
+    server/src/main.cpp
+    server/src/conn/AsyncTcpServer.cpp
+    server/include/acs/conn/AsyncTcpServer.hpp
+    server/include/acs/conn/ConnectionManager.hpp
+    server/include/acs/conn/ConnectionStateListener.hpp
+    server/include/acs/conn/TcpConnection.hpp
+    ${PROTO_SRCS}
+    ${PROTO_HDRS}
+    )
+add_executable(server ${SERVER_SRC})
+target_include_directories(server
+    PRIVATE
+    server/include
+    common/include
+    ${ASIO_INC_DIR}
+    ${PROTO_GEN_DIR}
+    )
+target_link_libraries(server pthread ${PROTOBUF_LIBRARIES})
+add_dependencies(server generate_proto)
+
 # target_include_directories(csServer
 #     PUBLIC
 #     ${PROTOBUF_INCLUDE_DIRS}
 #     ${CMAKE_CURRENT_BINARY_DIR}
 # )
-target_link_libraries(csServer pthread ${PROTOBUF_LIBRARIES})
 
+# tests
+set(TESTS_SRC
+    common/tests/util/SimpleLoggerTest.cpp
+    common/include/acs/util/SimpleLogger.hpp
+    )
+add_executable(tests ${TESTS_SRC})
+target_include_directories(tests
+    PRIVATE
+    common/include
+    )
+target_link_libraries(tests
+    gmock_main pthread)
+
+# # common tests
+# add_library(tests_common
+#     common/tests/util/SimpleLoggerTest.cpp
+#     common/include/acs/util/SimpleLogger.hpp
+#     )
+# target_include_directories(tests_common
+#     PUBLIC
+#     common/include
+#     )
+# target_link_libraries(tests_common pthread)
+# 
+# # client tests
+# # server tests
+# 
+# # tests executable
+# add_executable(tests)
+# target_link_libraries(tests
+#     tests_common gmock_main)
+
+#TODO 3 test executables or 1 bulk?
+# # tests:common
+# set(testSources
+#     common/src/test/TimerTest.cpp
+#     common/src/test/util/SimpleLoggerTest.cpp
+# )
+# add_executable(tests)
+# target_sources()
+# target_link_libraries(tests gmock_main pthread)
+
+#TODO target_* commands instead of global
 #TODO subdirectories, building libraries - common, client, server

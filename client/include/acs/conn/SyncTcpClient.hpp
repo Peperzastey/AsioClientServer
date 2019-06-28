@@ -1,27 +1,22 @@
 /** \file 
  *  \brief Definition of the \a SyncTcpClient class.
  */
-#ifndef SYNCTCPCLIENT_HPP__
-#define SYNCTCPCLIENT_HPP__
+#ifndef ACS_SYNCTCPCLIENT_HPP__
+#define ACS_SYNCTCPCLIENT_HPP__
 
 #include <ostream>
 #include <asio/ip/tcp.hpp>
 
-//TODO class cs::core::Application;
-namespace cs::core {
-// forward declaration
-class Application;
-} // namespace cs::core
+namespace asio {
+class io_context;
+} // namespace asio
 
-namespace cs::common::conn::protocol {
+namespace acs::proto {
 class ChatMessage;
-} // namespace cs::common::conn::protocol
+} // namespace acs::proto
 
-/// Contains TCP connection functionality.
-namespace cs::conn::tcp {
-
-using namespace core;
-using namespace common::conn;
+/// Contains connection functionality.
+namespace acs::conn {
 
 /// TCP connection client endpoint.
 /**
@@ -40,7 +35,7 @@ public:
      * 
      * \todo string_view ?
      */
-    explicit SyncTcpClient(Application &app, const std::string &remoteHost, const std::string &service);
+    explicit SyncTcpClient(asio::io_context &ioContext, const std::string &remoteHost, const std::string &service);
 
     /// Run infinite loop receiving data from the \a remoteHost.
     /**
@@ -55,15 +50,13 @@ public:
     static constexpr std::size_t RECV_BUFFER_SIZE = 128;
 
 protected:
-    static std::string _decodeMessage(const protocol::ChatMessage &message);
+    static std::string _decodeMessage(const proto::ChatMessage &message);
 
 private:
-    /// Reference to the Application object.
-    Application &_app;
     /// Client-side endpoint socket.
     asio::ip::tcp::socket _socket;
 };
 
-} // namespace cs::conn::tcp
+} // namespace acs::conn
 
-#endif // SYNCTCPCLIENT_HPP__
+#endif // ACS_SYNCTCPCLIENT_HPP__

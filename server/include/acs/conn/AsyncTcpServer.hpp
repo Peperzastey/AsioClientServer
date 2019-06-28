@@ -1,23 +1,20 @@
 /** \file 
  *  \brief Definition of the \a AsyncTcpServer class.
  */
-#ifndef ASYNCTCPSERVER_HPP__
-#define ASYNCTCPSERVER_HPP__
+#ifndef ACS_ASYNCTCPSERVER_HPP__
+#define ACS_ASYNCTCPSERVER_HPP__
 
-#include "conn/ConnectionManager.hpp"
-#include "TcpConnection.hpp"
+#include "acs/conn/ConnectionManager.hpp"
+#include "acs/conn/TcpConnection.hpp"
 #include <asio/ip/tcp.hpp>
 #include <list>
 
-namespace cs::core {
-// forward declaration
-class Application;
-} // namespace cs::core
+namespace asio {
+class io_context;
+} // namespace asio
 
-/// Contains server-side TCP connection functionality.
-namespace cs::server::conn::tcp {
-
-using namespace core;
+/// Contains connection functionality.
+namespace acs::conn {
 
 /// Asynchronous TCP Server.
 class AsyncTcpServer final {
@@ -29,7 +26,7 @@ public:
     static constexpr auto ipVersion = &asio::ip::tcp::v4;
 
     /// Constructor
-    explicit AsyncTcpServer(Application &app, port_t portNumber, [[maybe_unused]] const std::string &service);
+    explicit AsyncTcpServer(asio::io_context &ioContext, port_t portNumber, const std::string &service);
 
 protected:
     void handleAccept(TcpConnection &connection, const std::error_code &error);
@@ -38,13 +35,11 @@ private:
     void startAccept();
 
 private:
-    /// Reference to the Application object.
-    Application &_app;
     /// Server-side acceptor socket endpoint.
     asio::ip::tcp::acceptor _acceptor;
     ConnectionManager<TcpConnection> _connManager;
 };
 
-} // namespace cs::server::conn::tcp
+} // namespace acs::conn
 
-#endif // ASYNCTCPSERVER_HPP__
+#endif // ACS_ASYNCTCPSERVER_HPP__

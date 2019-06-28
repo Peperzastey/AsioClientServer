@@ -1,13 +1,10 @@
-#ifndef CONNECTION_STATE_LISTENER_HPP__
-#define CONNECTION_STATE_LISTENER_HPP__
+#ifndef ACS_CONNECTION_STATE_LISTENER_HPP__
+#define ACS_CONNECTION_STATE_LISTENER_HPP__
 
-namespace cs::server::conn {
+namespace acs::conn {
 
-namespace tcp {
 class TcpConnection;
-} // namespace tcp
-
-using Connection = tcp::TcpConnection;
+using Connection = TcpConnection;
 
 /// Interface for observing Connection state changes.
 class ConnectionStateListener {
@@ -19,6 +16,6 @@ public:
 
 inline ConnectionStateListener::~ConnectionStateListener() = default;
 
-} // namespace cs::server::conn
+} // namespace acs::conn
 
-#endif // CONNECTION_STATE_LISTENER_HPP__
+#endif // ACS_CONNECTION_STATE_LISTENER_HPP__

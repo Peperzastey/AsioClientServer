@@ -1,5 +1,4 @@
-#include "SyncTcpClient.hpp"
-#include "core/Application.hpp"
+#include "acs/conn/SyncTcpClient.hpp"
 #include <string>
 #include <array>
 #include <system_error>
@@ -8,17 +7,10 @@
 #include <sstream>
 #include "chat.pb.h"
 
-using namespace cs::common::conn;
+namespace acs::conn {
 
-namespace cs::conn::tcp {
-
-SyncTcpClient::SyncTcpClient(Application &app, const std::string &remoteHost, const std::string &service)
-    : _app(app), _socket(_app.getContext()) {
-    /*asio::ip::tcp::resolver resolver(app.getContext());
-    auto endpoints = resolver.resolve(remoteHost, service);
-    asio::connect(_socket, endpoints);*/
-    /*std::array remotes{ asio::ip::tcp::endpoint(asio::ip::address_v4(), 54321) };
-    asio::connect(_socket, remotes);*/
+SyncTcpClient::SyncTcpClient(asio::io_context &ioContext, const std::string &remoteHost, const std::string &service)
+    : _socket(ioContext) {    
     asio::ip::tcp::endpoint remote(asio::ip::address_v4(), 54321);
     _socket.connect(remote);
 }
@@ -39,7 +31,7 @@ void SyncTcpClient::receiveInfinitely(std::ostream &out) {
         
         //TODO collect whole message first!!!
         std::string dataString(recvBuffer.data(), readLen);
-        protocol::ChatMessage message{};
+        proto::ChatMessage message{};
         //TODO use ParseFromArray
         if (!message.ParseFromString(dataString)) {
             out << "Failed to parse chat message." << std::endl;
@@ -52,26 +44,26 @@ void SyncTcpClient::receiveInfinitely(std::ostream &out) {
     }
 }
 
-std::string SyncTcpClient::_decodeMessage(const protocol::ChatMessage &message) {
+std::string SyncTcpClient::_decodeMessage(const proto::ChatMessage &message) {
     std::ostringstream decoded("Message received:\n");
 
     decoded << "Id:   " << message.id()
           << "\nType: ";
 
     switch (message.type()) {
-        case protocol::ChatMessage::NORMAL:
+        case proto::ChatMessage::NORMAL:
             decoded << "normal";
             break;
-        case protocol::ChatMessage::URGENT:
+        case proto::ChatMessage::URGENT:
             decoded << "urgent";
             break;
-        case protocol::ChatMessage::EVENT_SETTER:
+        case proto::ChatMessage::EVENT_SETTER:
             decoded << "event setter";
             break;
-        case protocol::ChatMessage::EVENT_DELETER:
+        case proto::ChatMessage::EVENT_DELETER:
             decoded << "event deleter";
             break;
-        case protocol::ChatMessage::TEST:
+        case proto::ChatMessage::TEST:
             decoded << "test";
             break;
         default:
@@ -84,4 +76,4 @@ std::string SyncTcpClient::_decodeMessage(const protocol::ChatMessage &message) 
     return decoded.str();
 }
 
-} // namespace cs::conn::tcp
+} // namespace acs::conn

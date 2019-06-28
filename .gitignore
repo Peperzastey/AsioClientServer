@@ -13,13 +13,14 @@ CTestTestfile.cmake
 Testing/
 
 # Doxygen generated docs
-Docs/
+docs/html
+docs/latex
+# TODO:
+#docs/*
+#!docs/Doxyfile
 
-# built executables
-/csClient
-/csServer
-/tests
-/protobuf_example
+# build directory
+/build*
 
 # Protobuf generated files
 *.pb.h
