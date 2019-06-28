@@ -53,51 +53,26 @@ public:
     //using response_factory_func_t = std::string(std::string_view);
     using response_factory_func_t = decltype(std::addressof(std::declval<std::string(std::string_view)>()));
 
-
+    /// Constructor
+    /**
+     * \param ioContext IO Context of the Application object
+     * \param responseFactory object of type response_factory_func_t used to create response to a request provided
+     */
     TcpConnection(asio::io_context &ioContext, ConnectionStateListener &observer, response_factory_func_t responseFactory = chat_proto_response_factory)
         : _socket(ioContext), _observer(observer), _responseFactory(responseFactory) {}
 
-    // TcpConnection is not copy-constructible.
+    /// TcpConnection is not copy-constructible.
     TcpConnection(const TcpConnection&) = delete;
-    // TcpConnection is not copy-assignable.
+    /// TcpConnection is not copy-assignable.
     TcpConnection& operator=(const TcpConnection&) = delete;
 
-
-    /// Create an instance of TcpConnection.
-    /**
-     * \param ioContext IO Context of the Application object
-     * \param responseFactory object of type response_factory_func_t used to create response to a request provided to it
-     * 
-     * \return upointer holding sole ownership of the created instance
-     * 
-     * \warning this implementation requires that TcpConnection has virtual destructor
-     * \todo change make_shared_from_private lambda to use parameter pack
-     * \todo perform leak check with Valgrind
-     */
-    static upointer create(asio::io_context &ioContext, ConnectionStateListener &observer, response_factory_func_t responseFactory = default_response_factory) {
-        auto make_shared_from_private = [](auto&& context, auto&& observer, auto&& respFactory) {
-            struct make_shared_enabler : public TcpConnection {
-                using Ctx = decltype(context);
-                using Observer = decltype(observer);
-                using RF = decltype(respFactory);
-                make_shared_enabler(Ctx&& ctx, Observer&& obs, RF&& rf) : TcpConnection(std::forward<Ctx>(ctx), std::forward<Observer>(obs), std::forward<RF>(rf)) {}
-            };
-
-            return std::make_unique<make_shared_enabler>(context, observer, respFactory);
-        };
-
-        return make_shared_from_private(ioContext, observer, responseFactory);
-    }
 
     /// Start handling the connection.
     void start() {
         _sendMsg = _responseFactory({});
 
-        /*asio::async_write(_socket, asio::buffer(_sendMsg), [uptr = std::move(this)](auto&&... params) {
-            uptr->handleWrite(std::forward<decltype(params)>(params)...);
-        }); ??? */
         asio::async_write(_socket, asio::buffer(_sendMsg), [this](auto&&... params) {
-            handleWrite(std::forward<decltype(params)>(params)...);
+            handleWrite_close(std::forward<decltype(params)>(params)...);
         });
     }
 
@@ -128,16 +103,22 @@ public:
     }
 
 public:
+    /// TcpConnection object can be compared for equality with other object of this class.
+    /**
+     * \note This is used for removing stored connection objects on the server.
+     */
     inline bool operator==(const TcpConnection &other) const noexcept {
         return this->_id == other._id;
     }
 
-    virtual ~TcpConnection() = default;
-
 protected:
-    void handleWrite(const std::error_code &error, std::size_t bytesSend) {
+    void handleWrite_close(const std::error_code &error, std::size_t bytesSend) {
         util::log() << "handleWrite" << std::endl;
         close();
+    }
+
+    void handleWrite(const std::error_code &error, std::size_t bytesSend) {
+        util::log() << "handleWrite" << std::endl;
     }
 
 private:
@@ -156,7 +137,7 @@ private:
     response_factory_func_t _responseFactory;
     /// Message to send to the connected peer.
     /**
-     * Holds the message until it is sent (asynchronously).
+     * Holds the message until it is (asynchronously) sent.
      */
     std::string _sendMsg;
     /// Identifies the connection.

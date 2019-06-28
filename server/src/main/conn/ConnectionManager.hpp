@@ -2,13 +2,17 @@
 #define CONNECTION_MANAGER_HPP__
 
 #include "ConnectionStateListener.hpp"
+#include "util/SimpleLogger.hpp"
 #include <list>
+#include <ostream>
 
 namespace asio {
 class io_context;
 }
 
 namespace cs::server::conn {
+
+using namespace cs::common;
 
 /// Manages and holds owership of the connections.
 /**
@@ -40,9 +44,20 @@ public:
         //_purgeConnection(conn); -- called by connectionClosed event handler
     }
 
+    /**
+     * \param out \a ostream to print to
+     * \todo Move somewhere else? (a helper/util class)
+     */
+    void printOpenConnections(std::ostream &out) const {
+        out << "Open connections:\n";
+        for (const auto& conn : _connections)
+            out << "  " << conn << '\n';
+    }
+
 protected:
     void connectionClosed(Connection &conn) override {
         _purgeConnection(conn);
+        util::log() << "Connection closed: " << conn << '\n';
     }
 
 private:

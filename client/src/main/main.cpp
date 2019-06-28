@@ -8,6 +8,7 @@ using namespace cs;
 /// The entry point to the client application.
 /**
  * \todo use argv for remoteHost and service
+ * \todo terminate connection on SIGINT (or do it somehow on the server)
  */
 int main(int argc, char *argv[]) {
     auto& app = core::Application::instance();

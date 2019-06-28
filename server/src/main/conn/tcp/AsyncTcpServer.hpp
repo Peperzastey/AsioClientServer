@@ -32,7 +32,7 @@ public:
     explicit AsyncTcpServer(Application &app, port_t portNumber, [[maybe_unused]] const std::string &service);
 
 protected:
-    void handleAccept(/*TcpConnection::upointer&& connection*/TcpConnection &connection, const std::error_code &error);
+    void handleAccept(TcpConnection &connection, const std::error_code &error);
 
 private:
     void startAccept();
