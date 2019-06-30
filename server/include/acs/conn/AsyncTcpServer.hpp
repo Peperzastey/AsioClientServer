@@ -22,11 +22,15 @@ public:
     /// Port number typedef.
     using port_t = std::uint16_t;
     /// IP protocol version typedef.
-    //using ip_version_t = asio::ip::tcp::address_v4;
-    static constexpr auto ipVersion = &asio::ip::tcp::v4;
+    //using ip_version_t = asio::ip::tcp::address_v6;
+    static constexpr auto ipVersion = &asio::ip::tcp::v6;
 
+    /// Acceptor's backlog size.
+    static constexpr int BACKLOG_SIZE = 32;
+
+public:
     /// Constructor
-    explicit AsyncTcpServer(asio::io_context &ioContext, port_t portNumber, const std::string &service);
+    explicit AsyncTcpServer(asio::io_context &ioContext, port_t portNumber, bool reuseAddress = true);
 
 protected:
     void handleAccept(TcpConnection &connection, const std::error_code &error);

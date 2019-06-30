@@ -32,6 +32,17 @@ add_custom_target(generate_proto
 #TODO change destination dir
 set(PROTO_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
+# common
+set(COMMON_SRC
+    common/src/util/Logger.cpp
+    common/include/acs/util/Logger.hpp
+    )
+add_library(common ${COMMON_SRC})
+target_include_directories(common
+    PUBLIC
+    common/include
+    )
+
 # client
 set(CLIENT_SRC
     client/src/main.cpp
@@ -39,7 +50,7 @@ set(CLIENT_SRC
     client/include/acs/conn/SyncTcpClient.hpp
     ${PROTO_SRCS}
     ${PROTO_HDRS}
-)
+    )
 add_executable(client ${CLIENT_SRC})
 target_include_directories(client
     PRIVATE
@@ -48,7 +59,7 @@ target_include_directories(client
     ${ASIO_INC_DIR}
     ${PROTO_GEN_DIR}
     )
-target_link_libraries(client pthread ${PROTOBUF_LIBRARIES})
+target_link_libraries(client PRIVATE common pthread ${PROTOBUF_LIBRARIES})
 add_dependencies(client generate_proto)
 
 # server
@@ -70,7 +81,7 @@ target_include_directories(server
     ${ASIO_INC_DIR}
     ${PROTO_GEN_DIR}
     )
-target_link_libraries(server pthread ${PROTOBUF_LIBRARIES})
+target_link_libraries(server PRIVATE common pthread ${PROTOBUF_LIBRARIES})
 add_dependencies(server generate_proto)
 
 # target_include_directories(csServer
@@ -81,16 +92,15 @@ add_dependencies(server generate_proto)
 
 # tests
 set(TESTS_SRC
-    common/tests/util/SimpleLoggerTest.cpp
-    common/include/acs/util/SimpleLogger.hpp
+    common/tests/util/LoggerTest.cpp
+    common/include/acs/util/Logger.hpp
     )
 add_executable(tests ${TESTS_SRC})
 target_include_directories(tests
     PRIVATE
     common/include
     )
-target_link_libraries(tests
-    gmock_main pthread)
+target_link_libraries(tests PRIVATE common gmock_main pthread)
 
 # # common tests
 # add_library(tests_common

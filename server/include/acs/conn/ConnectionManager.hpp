@@ -2,7 +2,7 @@
 #define ACS_CONNECTION_MANAGER_HPP__
 
 #include "acs/conn/ConnectionStateListener.hpp"
-#include "acs/util/SimpleLogger.hpp"
+#include "acs/util/Logger.hpp"
 #include <list>
 #include <ostream>
 

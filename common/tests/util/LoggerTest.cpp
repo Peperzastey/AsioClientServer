@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-#include "acs/util/SimpleLogger.hpp"
+#include "acs/util/Logger.hpp"
 #include <sstream>
 
 using namespace acs::util;
 
 namespace {
 
-class CommonSimpleLoggerTest : public testing::Test {
+class CommonLoggerTest : public testing::Test {
 protected:
     std::ostringstream _ostream;
 
@@ -27,7 +27,7 @@ std::ostream& operator<<(std::ostream &out, const OutputDummy&) {
 
 } // namespace dummy
 
-TEST_F(CommonSimpleLoggerTest, OutputsCorrectStringMessage) {
+TEST_F(CommonLoggerTest, OutputsCorrectStringMessage) {
     std::string toLog = "a\tb. c  \n\ndef\n8";
     std::string expectedOutput = toLog + '\n';
 
@@ -36,7 +36,7 @@ TEST_F(CommonSimpleLoggerTest, OutputsCorrectStringMessage) {
     checkStreamDataEqualTo(expectedOutput);
 }
 
-TEST_F(CommonSimpleLoggerTest, OutputsCorrectStringMessageUsingBLSOperator) {
+TEST_F(CommonLoggerTest, OutputsCorrectStringMessageUsingBLSOperator) {
     std::string expectedOutput = "abc\t120.01dummy objecta\n nara\n";
 
     log(_ostream) << "abc\t" << 12 << 0.01 << dummy::OutputDummy{} << 'a' << '\n' << " nara" << std::endl;

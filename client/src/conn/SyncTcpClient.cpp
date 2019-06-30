@@ -3,15 +3,15 @@
 #include <array>
 #include <system_error>
 #include <asio/ip/tcp.hpp>
-#include <asio/connect.hpp>
+#include <asio/ip/address.hpp>
 #include <sstream>
 #include "chat.pb.h"
 
 namespace acs::conn {
 
-SyncTcpClient::SyncTcpClient(asio::io_context &ioContext, const std::string &remoteHost, const std::string &service)
+SyncTcpClient::SyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort)
     : _socket(ioContext) {    
-    asio::ip::tcp::endpoint remote(asio::ip::address_v4(), 54321);
+    asio::ip::tcp::endpoint remote(asio::ip::make_address(remoteHost), remotePort);
     _socket.connect(remote);
 }
 

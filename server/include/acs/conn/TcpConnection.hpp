@@ -5,7 +5,7 @@
 #define ACS_TCPCONNECTION_HPP__
 
 #include "acs/conn/ConnectionStateListener.hpp"
-#include "acs/util/SimpleLogger.hpp"
+#include "acs/util/Logger.hpp"
 #include <memory>
 #include <utility>
 #include <string>

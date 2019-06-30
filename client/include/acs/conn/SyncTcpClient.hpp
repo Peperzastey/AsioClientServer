@@ -25,17 +25,18 @@ namespace acs::conn {
  */
 class SyncTcpClient final {
 public:
-    /// Constructor
+    /// Port number typedef.
+    using port_t = std::uint16_t;
+
+    /// Constructor.
     /**
      * Connects to the provided \a remoteHost, \a service pair synchronously.
      * 
-     * \param app reference to the Application object
-     * \param remoteHost hostname to connect to
-     * \param service \a remoteHost's service to connect to
-     * 
-     * \todo string_view ?
+     * \param ioContext application's \a asio::io_context
+     * \param remoteHost IP address of the remote to connect to
+     * \param remotePort remote's port number
      */
-    explicit SyncTcpClient(asio::io_context &ioContext, const std::string &remoteHost, const std::string &service);
+    explicit SyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort);
 
     /// Run infinite loop receiving data from the \a remoteHost.
     /**
