@@ -57,8 +57,8 @@ public:
 
 protected: //TODO public (LSP!) !?
     void connectionClosed(Connection &conn) override {
-        _purgeConnection(conn);
         util::Logger::instance().log() << "Connection closed: " << conn << std::endl;
+        _purgeConnection(conn);
     }
 
 private:
