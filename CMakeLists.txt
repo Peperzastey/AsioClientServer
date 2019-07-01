@@ -36,6 +36,7 @@ set(PROTO_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(COMMON_SRC
     common/src/util/Logger.cpp
     common/include/acs/util/Logger.hpp
+    common/include/acs/util/Identity.hpp
     )
 add_library(common ${COMMON_SRC})
 target_include_directories(common
@@ -69,7 +70,11 @@ set(SERVER_SRC
     server/include/acs/conn/AsyncTcpServer.hpp
     server/include/acs/conn/ConnectionManager.hpp
     server/include/acs/conn/ConnectionStateListener.hpp
+    server/src/conn/TcpConnection.cpp
     server/include/acs/conn/TcpConnection.hpp
+    server/include/acs/logic/ClientHandler.hpp
+    server/src/debug/TestClientHandler.cpp
+    server/include/acs/debug/TestClientHandler.hpp
     ${PROTO_SRCS}
     ${PROTO_HDRS}
     )

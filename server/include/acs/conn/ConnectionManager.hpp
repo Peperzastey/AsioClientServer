@@ -3,8 +3,11 @@
 
 #include "acs/conn/ConnectionStateListener.hpp"
 #include "acs/util/Logger.hpp"
+#include "acs/util/Identity.hpp"
+#include "acs/debug/TestClientHandler.hpp"
 #include <list>
 #include <ostream>
+#include <utility>
 
 namespace asio {
 class io_context;
@@ -23,8 +26,13 @@ public:
     /**
      * \return created connection
      */
+    template <typename ClientHandlerT>
     Connection& newConnection(asio::io_context &ioContext) {
-        return _connections.emplace_back(ioContext, *this);
+        //return _connections.emplace_back<ClientHandlerT>(ioContext, *this); ???try?
+        return _connections.emplace_back(ioContext, *this, util::Identity<ClientHandlerT>{});
+        // Connection newConn(ioContext, *this, util::Identity<ClientHandlerT>{});
+        // _connections.push_back(std::move(newConn));
+        // return _connections.back();
     }
 
     /// Close \a connection.
@@ -47,7 +55,7 @@ public:
         out << std::endl;
     }
 
-protected:
+protected: //TODO public (LSP!) !?
     void connectionClosed(Connection &conn) override {
         _purgeConnection(conn);
         util::Logger::instance().log() << "Connection closed: " << conn << std::endl;
