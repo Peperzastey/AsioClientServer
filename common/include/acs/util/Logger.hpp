@@ -7,9 +7,16 @@
 namespace acs::util {
 
 /// Simple logging facility.
+/**
+ * \todo add IS A std::ostream; Logger.operator<< writes to _out; Logger.error().operator<< writes to _errorOut
+ * \todo Logging levels
+ */
 class Logger {
 public:
     using outstream_t = std::ostream;
+
+    /// Logger sink (of type outstream_t) discarding all output.
+    static outstream_t &nullSink;
 
 public:
     explicit Logger(outstream_t &out, outstream_t &errorOut) noexcept;

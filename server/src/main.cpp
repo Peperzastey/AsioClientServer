@@ -10,10 +10,10 @@ using namespace acs;
 constexpr unsigned short DEFAULT_PORT = 54321;
 
 /// The entry point to the server application.
-/**
- * \todo use argv for \a portNumber and \a service
- */
 int main(int argc, char *argv[]) {
+    util::Logger logger(std::cout, std::cerr);
+    util::Logger::registerInstance(logger);
+
     asio::io_context context{};
 
     auto portNum = DEFAULT_PORT;
@@ -21,9 +21,6 @@ int main(int argc, char *argv[]) {
         //TODO use std::from_chars (C++17)
         portNum = std::atoi(argv[1]);
     }
-
-    util::Logger logger(std::cout, std::cerr);
-    util::Logger::registerInstance(logger);
 
     try {
         conn::AsyncTcpServer tcpServer(context, portNum);
@@ -33,9 +30,9 @@ int main(int argc, char *argv[]) {
 
         context.run();
     } catch (const std::system_error &err) {
-        std::cerr << "EXCEPTION CAUGHT:\n"
-                << err.code() << ": " << err.what()
-                << std::endl;
+        util::Logger::instance().logError() << "EXCEPTION CAUGHT:\n"
+            << err.code() << ": " << err.what()
+            << std::endl;
     }
 
     return 0;

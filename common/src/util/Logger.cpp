@@ -19,13 +19,14 @@ inline std::ostream& nullStream() {
 
 /// Null logger.
 inline Logger& nullLogger() {
-    auto &nullStr = nullStream();
+    static auto &nullStr = nullStream();
     static Logger nullLog(nullStr, nullStr);
     return nullLog;
 }
 
 } // unnamed namespace
 
+Logger::outstream_t &Logger::nullSink = nullStream();
 Logger *Logger::_instance = &(nullLogger());
 
 Logger::Logger(outstream_t &out, outstream_t &errorOut) noexcept

@@ -15,7 +15,7 @@ SyncTcpClient::SyncTcpClient(asio::io_context &ioContext, std::string_view remot
     _socket.connect(remote);
 }
 
-void SyncTcpClient::receiveInfinitely(std::ostream &out) {
+void SyncTcpClient::receiveInfinitely(std::ostream &out, std::ostream &errorOut) {
     std::array<char, RECV_BUFFER_SIZE> recvBuffer;
     std::size_t readLen = 0;
     std::error_code error;
@@ -34,7 +34,8 @@ void SyncTcpClient::receiveInfinitely(std::ostream &out) {
         proto::ChatMessage message{};
         //TODO use ParseFromArray
         if (!message.ParseFromString(dataString)) {
-            out << "Failed to parse chat message." << std::endl;
+            //TODO throw exception ?
+            errorOut << "Failed to parse chat message." << std::endl;
         }
         auto decodedMessage = _decodeMessage(message);
 

@@ -33,7 +33,7 @@ void AsyncTcpServer::handleAccept(TcpConnection& connection, const std::error_co
     if (!error)
         connection.start();
 
-    _connManager.printOpenConnections(util::log());
+    _connManager.printOpenConnections(util::Logger::instance().log());
 
     startAccept();
 }

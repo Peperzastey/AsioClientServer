@@ -44,7 +44,7 @@ public:
      * 
      * Returns when the \a remoteHost closes the connection.
      */
-    void receiveInfinitely(std::ostream &out);
+    void receiveInfinitely(std::ostream &out, std::ostream &errorOut);
 
 public:
     /// Size of the receive buffer.

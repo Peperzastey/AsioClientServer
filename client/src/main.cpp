@@ -1,4 +1,5 @@
 #include "acs/conn/SyncTcpClient.hpp"
+#include "acs/util/Logger.hpp"
 #include <asio/io_context.hpp>
 #include <system_error>
 #include <string_view>
@@ -16,6 +17,9 @@ constexpr conn::SyncTcpClient::port_t DEFAULT_REMOTE_PORT = 54321;
  * \todo --port (-p) and --host (-h) options
  */
 int main(int argc, char *argv[]) {
+    util::Logger logger(std::cout, std::cerr);
+    util::Logger::registerInstance(logger);
+
     asio::io_context context{};
 
     // ./client port host
@@ -31,11 +35,11 @@ int main(int argc, char *argv[]) {
 
     try {
         conn::SyncTcpClient tcpClient(context, remoteHost, remotePort);
-        tcpClient.receiveInfinitely(std::cout);
+        tcpClient.receiveInfinitely(util::Logger::instance().log(), util::Logger::instance().logError());
     } catch (const std::system_error &err) {
-        std::cerr << "EXCEPTION CAUGHT:\n"
-                << err.code() << ": " << err.what()
-                << std::endl;
+        util::Logger::instance().logError() << "EXCEPTION CAUGHT:\n"
+            << err.code() << ": " << err.what()
+            << std::endl;
     }
 
     return 0;

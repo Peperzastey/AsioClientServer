@@ -41,15 +41,16 @@ public:
      * \todo Move somewhere else? (a helper/util class)
      */
     void printOpenConnections(std::ostream &out) const {
-        out << "Open connections:\n";
+        out << "Open connections:";
         for (const auto& conn : _connections)
-            out << "  " << conn << '\n';
+            out << "\n  " << conn;
+        out << std::endl;
     }
 
 protected:
     void connectionClosed(Connection &conn) override {
         _purgeConnection(conn);
-        util::log() << "Connection closed: " << conn << '\n';
+        util::Logger::instance().log() << "Connection closed: " << conn << std::endl;
     }
 
 private:

@@ -34,7 +34,7 @@ static std::string chat_proto_response_factory([[maybe_unused]] std::string_view
     std::string output;
     auto result = message.SerializeToString(&output);
     if (!result) {
-        util::log() << "Failed to serialize chat message." << std::endl;
+        util::Logger::instance().logError() << "Failed to serialize chat message." << std::endl;
     }
     return output; //(move)
 }
@@ -109,12 +109,12 @@ public:
 
 protected:
     void handleWrite_close(const std::error_code &error, std::size_t bytesSend) {
-        util::log() << "handleWrite" << std::endl;
+        util::Logger::instance().log() << "handleWrite" << std::endl;
         close();
     }
 
     void handleWrite(const std::error_code &error, std::size_t bytesSend) {
-        util::log() << "handleWrite" << std::endl;
+        util::Logger::instance().log() << "handleWrite" << std::endl;
     }
 
 private:
