@@ -32,7 +32,7 @@ public:
      */
     template <typename ClientHandlerT>
     TcpConnection(asio::io_context &ioContext, ConnectionStateListener &observer, util::Identity<ClientHandlerT> handlerType)
-        : _socket(ioContext), _id(generateConnId()), _handler(std::make_unique<typename decltype(handlerType)::type>(*this)), _observer(observer) {}
+        : _socket(ioContext), _id(_generateConnId()), _handler(std::make_unique<typename decltype(handlerType)::type>(*this)), _observer(observer) {}
     // implement by hand - bool _writeInProgress, size_t _id, ... need to be copied (built-in type)
     // thus move ctor is temporarily disabled
     //TcpConnection(TcpConnection&&) = default;
@@ -71,8 +71,8 @@ protected:
     void handleWrite(const std::error_code &error, std::size_t bytesSend);
 
 private:
-    static std::size_t generateConnId();
-    void doSend(/*WritePolicy*/);
+    static std::size_t _generateConnId();
+    void _doSend(/*WritePolicy*/);
 
 private:
     /// Socket representing the server-side connection endpoint.

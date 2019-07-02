@@ -1,5 +1,11 @@
 cmake_minimum_required (VERSION 3.1...3.14)
-project (AsioClientServer) #TODO add version
+project (AsioClientServer
+    VERSION 0.1
+    DESCRIPTION "Tcp client-server program using Asio and Protobuf."
+    LANGUAGES CXX
+    )
+
+include(CTest)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
@@ -8,6 +14,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DASIO_STANDALONE")
 
 # Asio
 set(ASIO_INC_DIR /home/przemek/Dirs/libs/asio-1.12.2/include)
+
+# thread library
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads) # REQUIRED ?
 
 # Protobuf
 # find the protobuf compiler and libraries
@@ -18,18 +29,25 @@ else()
     message (FATAL_ERROR "Cannot find Protobuf")
 endif()
 
-#TODO find GTest and GMock
 
 # common
-#TODO add_custom_command ? (some sort of target)
 set(PROTO_FILES
     common/proto/chat.proto
     )
-# add_custom_command() + DEPENDS ${PROTO_FILES}?
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
-add_custom_target(generate_proto
-    DEPENDS ${PROTO_SRCS} ${PROTO_HDRS})
-#TODO change destination dir
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
+message ("Proto sources to be generated:")
+message ("PROTO_SRCS = ${PROTO_SRCS}")
+message ("PROTO_HDRS = ${PROTO_HDRS}")
+add_custom_target(GenerateProto
+    DEPENDS ${PROTO_SRCS} ${PROTO_HDRS}
+    COMMENT "Generate sources from proto files"
+    )
+# generate_proto_sources script: configure_file() / file(GENERATE)
+# add_custom_target(GenerateProto
+#     COMMAND ${CMAKE_COMMAND} -D PROTO_FILES=${PROTO_FILES} -P ${PROJECT_SOURCE_DIR}/generate_proto_sources.cmake
+#     COMMENT "Generate sources from proto files"
+#     )
+#TODO change destination dir (how?)
 set(PROTO_GEN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # common
@@ -60,8 +78,8 @@ target_include_directories(client
     ${ASIO_INC_DIR}
     ${PROTO_GEN_DIR}
     )
-target_link_libraries(client PRIVATE common pthread ${PROTOBUF_LIBRARIES})
-add_dependencies(client generate_proto)
+target_link_libraries(client PRIVATE common protobuf::libprotobuf Threads::Threads)
+add_dependencies(client GenerateProto)
 
 # server
 set(SERVER_SRC
@@ -86,8 +104,8 @@ target_include_directories(server
     ${ASIO_INC_DIR}
     ${PROTO_GEN_DIR}
     )
-target_link_libraries(server PRIVATE common pthread ${PROTOBUF_LIBRARIES})
-add_dependencies(server generate_proto)
+target_link_libraries(server PRIVATE common protobuf::libprotobuf Threads::Threads)
+add_dependencies(server GenerateProto)
 
 # target_include_directories(csServer
 #     PUBLIC
@@ -95,46 +113,73 @@ add_dependencies(server generate_proto)
 #     ${CMAKE_CURRENT_BINARY_DIR}
 # )
 
-# tests
-set(TESTS_SRC
+if(BUILD_TESTING)
+    # TODO find GTest, GMock
+
+    # # thread library
+    # set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+    # set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+    # find_package(Threads) # REQUIRED ?
+
+    # tests
+    set(TESTS_SRC
     common/tests/util/LoggerTest.cpp
     common/include/acs/util/Logger.hpp
     )
-add_executable(tests ${TESTS_SRC})
-target_include_directories(tests
+    add_executable(tests ${TESTS_SRC})
+    target_include_directories(tests
     PRIVATE
     common/include
     )
-target_link_libraries(tests PRIVATE common gmock_main pthread)
+    target_link_libraries(tests PRIVATE common gmock_main Threads::Threads)
+    add_test(NAME CommonTest COMMAND tests)
 
-# # common tests
-# add_library(tests_common
-#     common/tests/util/SimpleLoggerTest.cpp
-#     common/include/acs/util/SimpleLogger.hpp
-#     )
-# target_include_directories(tests_common
-#     PUBLIC
-#     common/include
-#     )
-# target_link_libraries(tests_common pthread)
-# 
-# # client tests
-# # server tests
-# 
-# # tests executable
-# add_executable(tests)
-# target_link_libraries(tests
-#     tests_common gmock_main)
+    # add_custom_target for all the tests? / that DEPENDS on all the test targets?
+    add_custom_target(AllTests ALL)
+        # DEPENDS tests  - file-level dependency
+    add_dependencies(AllTests   # target-level dependencies
+        tests #client #server
+    )
+    add_custom_command(TARGET AllTests
+        COMMENT "Run tests"
+        POST_BUILD
+        COMMAND ctest #-C $<CONFIGURATION> --output-on-failure
+        # WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
 
-#TODO 3 test executables or 1 bulk?
-# # tests:common
-# set(testSources
-#     common/src/test/TimerTest.cpp
-#     common/src/test/util/SimpleLoggerTest.cpp
-# )
-# add_executable(tests)
-# target_sources()
-# target_link_libraries(tests gmock_main pthread)
+    # # common tests
+    # add_library(tests_common
+    #     common/tests/util/SimpleLoggerTest.cpp
+    #     common/include/acs/util/SimpleLogger.hpp
+    #     )
+    # target_include_directories(tests_common
+    #     PUBLIC
+    #     common/include
+    #     )
+    # target_link_libraries(tests_common pthread)
+    # 
+# 
+    # 
+    # # client tests
+    # # server tests
+    # 
+# 
+    # 
+    # # tests executable
+    # add_executable(tests)
+    # target_link_libraries(tests
+    #     tests_common gmock_main)
+
+    #TODO 3 test executables or 1 bulk?
+    # # tests:common
+    # set(testSources
+    #     common/src/test/TimerTest.cpp
+    #     common/src/test/util/SimpleLoggerTest.cpp
+    # )
+    # add_executable(tests)
+    # target_sources()
+    # target_link_libraries(tests gmock_main pthread)
+endif()
 
 #TODO target_* commands instead of global
 #TODO subdirectories, building libraries - common, client, server

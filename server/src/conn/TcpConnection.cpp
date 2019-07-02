@@ -7,7 +7,7 @@ namespace acs::conn {
 /**
  * \todo return socket's port number (opt. concat timestamp) ?
  */
-std::size_t TcpConnection::generateConnId() {
+std::size_t TcpConnection::_generateConnId() {
     static std::size_t nextId = 0;
     return nextId++;
 }
@@ -27,12 +27,12 @@ void TcpConnection::close() {
 
 void TcpConnection::send(const std::string &message) {
     _sendMsg = message;
-    doSend();
+    _doSend();
 }
 
 void TcpConnection::send(std::string &&message) {
     _sendMsg = std::move(message);
-    doSend();
+    _doSend();
 }
 
 void TcpConnection::handleWrite(const std::error_code &error, [[maybe_unused]] std::size_t bytesSend) {
@@ -48,7 +48,7 @@ void TcpConnection::handleWrite(const std::error_code &error, [[maybe_unused]] s
     // close();
 }
 
-void TcpConnection::doSend(/*WritePolicy*/) {
+void TcpConnection::_doSend(/*WritePolicy*/) {
     if (_writeInProgress) {
         //TODO execute policy / according to policy
         util::Logger::instance().logError()
