@@ -46,8 +46,13 @@ public:
     /// Close the connection.
     void close();
     /// Send the \a message to the connected client.
+    /**
+     * \todo add Async to the names
+     */
     void send(const std::string &message /*, TODO WritePolicy policy = QueueWrite*/);
     void send(std::string &&message /*, WritePolicy policy = QueueWrite*/);
+    /// Receive
+    void receive(std::size_t messageSize);
 
     /// Get server-side endpoint socket of this TcpConnection.
     asio::ip::tcp::socket& getSocket() noexcept {
@@ -56,6 +61,14 @@ public:
     /// Get connection id.
     std::size_t getId() const noexcept {
         return _id;
+    }
+
+    /// Set message descriptor fixed wire-size.
+    /**
+     * \note Must be set before invoking any \a receive method.
+     */
+    static void setMessageDescriptorSize(std::size_t size) noexcept {
+        _MESSAGE_DESCR_SIZE = size;
     }
 
 public:
@@ -91,6 +104,8 @@ private:
      * No other write operation on the same stream (socket) can interleave with any other compound operation.
      */
     mutable /*atomic*/ bool _writeInProgress = false;
+    /// Message descriptor (framing protocol for ChatMessage) fixed wire-size.
+    static std::size_t _MESSAGE_DESCR_SIZE;
 
 protected:
     /// State changes observer.

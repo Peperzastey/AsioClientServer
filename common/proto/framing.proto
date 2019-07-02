@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package acs.proto;
+
+message FramePrefix {
+    fixed32 size = 1;
+    //fixed32 user_id = 2;
+}

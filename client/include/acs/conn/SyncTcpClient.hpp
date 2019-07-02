@@ -12,6 +12,7 @@ class io_context;
 } // namespace asio
 
 namespace acs::proto {
+class FramePrefix;
 class ChatMessage;
 } // namespace acs::proto
 
@@ -54,8 +55,23 @@ protected:
     static std::string _decodeMessage(const proto::ChatMessage &message);
 
 private:
+    /// Initialize framing protocol.
+    /**
+     * Must be called before any \a receive method.
+     */
+    static void _initializeFramingProtocol();
+    /// Decode message size from framing protocol's prefix.
+    /**
+     * Pre-condition: Framing protocol must be initialized.
+     * \see _initializeFramingProtocol
+     */
+    static std::size_t _decodeMessageSize(const proto::FramePrefix &prefix);
+
+private:
     /// Client-side endpoint socket.
     asio::ip::tcp::socket _socket;
+    /// Framing protocol prefix size in bytes.
+    static std::size_t _FRAME_PREFIX_SIZE;
 };
 
 } // namespace acs::conn

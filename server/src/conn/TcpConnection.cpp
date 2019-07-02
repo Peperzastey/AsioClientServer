@@ -4,6 +4,8 @@
 
 namespace acs::conn {
 
+std::size_t TcpConnection::_MESSAGE_DESCR_SIZE = 0;
+
 /**
  * \todo return socket's port number (opt. concat timestamp) ?
  */
@@ -33,6 +35,10 @@ void TcpConnection::send(const std::string &message) {
 void TcpConnection::send(std::string &&message) {
     _sendMsg = std::move(message);
     _doSend();
+}
+
+void TcpConnection::receive(std::size_t messageSize) {
+    //TODO
 }
 
 void TcpConnection::handleWrite(const std::error_code &error, [[maybe_unused]] std::size_t bytesSend) {

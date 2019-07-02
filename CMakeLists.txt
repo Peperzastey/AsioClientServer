@@ -32,6 +32,7 @@ endif()
 
 # common
 set(PROTO_FILES
+    common/proto/framing.proto
     common/proto/chat.proto
     )
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
@@ -40,7 +41,6 @@ message ("PROTO_SRCS = ${PROTO_SRCS}")
 message ("PROTO_HDRS = ${PROTO_HDRS}")
 add_custom_target(GenerateProto
     DEPENDS ${PROTO_SRCS} ${PROTO_HDRS}
-    COMMENT "Generate sources from proto files"
     )
 # generate_proto_sources script: configure_file() / file(GENERATE)
 # add_custom_target(GenerateProto
@@ -91,6 +91,8 @@ set(SERVER_SRC
     server/src/conn/TcpConnection.cpp
     server/include/acs/conn/TcpConnection.hpp
     server/include/acs/logic/ClientHandler.hpp
+    server/src/echo/EchoClientHandler.cpp
+    server/include/acs/echo/EchoClientHandler.hpp
     server/src/debug/TestClientHandler.cpp
     server/include/acs/debug/TestClientHandler.hpp
     ${PROTO_SRCS}
