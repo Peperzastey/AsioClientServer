@@ -1,4 +1,4 @@
-#include "acs/conn/SyncTcpClient.hpp"
+#include "acs/conn/AsyncTcpClient.hpp"
 #include "acs/util/Logger.hpp"
 #include <asio/io_context.hpp>
 #include <system_error>
@@ -8,7 +8,7 @@
 using namespace acs;
 
 constexpr std::string_view DEFAULT_REMOTE_HOST = "127.0.0.1";
-constexpr conn::SyncTcpClient::port_t DEFAULT_REMOTE_PORT = 54321;
+constexpr conn::AsyncTcpClient::port_t DEFAULT_REMOTE_PORT = 54321;
 
 /// The entry point to the client application.
 /**
@@ -34,8 +34,9 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        conn::SyncTcpClient tcpClient(context, remoteHost, remotePort);
-        tcpClient.receiveInfinitely(util::Logger::instance().log(), util::Logger::instance().logError());
+        conn::AsyncTcpClient tcpClient(context, remoteHost, remotePort);
+        //tcpClient.receiveInfinitelyAsync(util::Logger::instance().log(), util::Logger::instance().logError()); // called callback in ctor
+        context.run();
     } catch (const std::system_error &err) {
         util::Logger::instance().logError() << "EXCEPTION CAUGHT:\n"
             << err.code() << ": " << err.what()

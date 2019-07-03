@@ -65,8 +65,8 @@ target_include_directories(common
 # client
 set(CLIENT_SRC
     client/src/main.cpp
-    client/src/conn/SyncTcpClient.cpp
-    client/include/acs/conn/SyncTcpClient.hpp
+    client/src/conn/AsyncTcpClient.cpp
+    client/include/acs/conn/AsyncTcpClient.hpp
     ${PROTO_SRCS}
     ${PROTO_HDRS}
     )

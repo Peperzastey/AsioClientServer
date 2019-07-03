@@ -1,4 +1,5 @@
-#include "acs/conn/SyncTcpClient.hpp"
+#include "acs/conn/AsyncTcpClient.hpp"
+#include "acs/util/Logger.hpp"
 #include <string>
 #include <array>
 #include <system_error>
@@ -13,9 +14,9 @@
 
 namespace acs::conn {
 
-std::size_t SyncTcpClient::_FRAME_PREFIX_SIZE = 0;
+std::size_t AsyncTcpClient::_FRAME_PREFIX_SIZE = 0;
 
-void SyncTcpClient::_initializeFramingProtocol() {
+void AsyncTcpClient::_initializeFramingProtocol() {
     static bool alreadyInitialized = false;
 
     if (!alreadyInitialized) {
@@ -27,18 +28,20 @@ void SyncTcpClient::_initializeFramingProtocol() {
     }
 }
 
-std::size_t SyncTcpClient::_decodeMessageSize(const proto::FramePrefix &prefix) {
+std::size_t AsyncTcpClient::_decodeMessageSize(const proto::FramePrefix &prefix) {
     return prefix.size();
 }
 
-SyncTcpClient::SyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort)
+AsyncTcpClient::AsyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort)
     : _socket(ioContext) {
     _initializeFramingProtocol();
     asio::ip::tcp::endpoint remote(asio::ip::make_address(remoteHost), remotePort);
-    _socket.connect(remote);
+    _socket.async_connect(remote, [this](auto&&... params) {
+        handleConnect(std::forward<decltype(params)>(params)...);
+    });
 }
 
-void SyncTcpClient::receiveInfinitely(std::ostream &out, std::ostream &errorOut) {
+void AsyncTcpClient::receiveInfinitelySync(std::ostream &out, std::ostream &errorOut) {
     std::array<char, RECV_BUFFER_SIZE> recvBuffer;
     //TODO use asio::dynamic_buffer with max_capacity equal to max income message size
     std::size_t readLen = 0;
@@ -80,7 +83,6 @@ void SyncTcpClient::receiveInfinitely(std::ostream &out, std::ostream &errorOut)
         // whole message collected
 
         proto::ChatMessage message{};
-        //TODO use ParseFromArray
         if (!message.ParseFromArray(recvBuffer.data(), readLen)) {
             //TODO throw exception ?
             errorOut << "Failed to parse chat message" << std::endl;
@@ -94,7 +96,58 @@ void SyncTcpClient::receiveInfinitely(std::ostream &out, std::ostream &errorOut)
     }
 }
 
-std::string SyncTcpClient::_decodeMessage(const proto::ChatMessage &message) {
+/**
+ * \todo refactor this method (duplication, complication)
+ */
+void AsyncTcpClient::receiveInfinitelyAsync(std::ostream &out, std::ostream &errorOut) {
+    // read frame prefix first
+    asio::async_read(_socket, asio::buffer(_recvBuffer, _FRAME_PREFIX_SIZE), [this, &out, &errorOut](const std::error_code& error, std::size_t bytes_transferred){
+        if (error == asio::error::eof) {
+            out << "\nConnection closed cleanly by peer" << std::endl;
+            return;
+        } else if (error)
+            throw std::system_error(error);
+
+        assert(bytes_transferred == _FRAME_PREFIX_SIZE);
+        // decode message size
+        proto::FramePrefix prefix{};
+        if (!prefix.ParseFromArray(_recvBuffer.data(), bytes_transferred)) {
+            errorOut << "Failed to parse frame prefix" << std::endl;
+            return; //TODO throw exception
+        }
+        const auto messageSize = _decodeMessageSize(prefix);
+        out << "DBG: size of message to come: " << messageSize << std::endl;
+        // read message
+        asio::async_read(_socket, asio::buffer(_recvBuffer, messageSize), [this, &out, &errorOut, messageSize](const std::error_code& error, std::size_t bytes_transferred){
+            if (error == asio::error::eof) {
+                out << "\nConnection closed cleanly by peer" << std::endl;
+                return;
+            } else if (error)
+                throw std::system_error(error);
+
+            assert(bytes_transferred == messageSize);
+            // decode message
+            proto::ChatMessage message{};
+            if (!message.ParseFromArray(_recvBuffer.data(), bytes_transferred)) {
+                //TODO throw exception ?
+                errorOut << "Failed to parse chat message" << std::endl;
+            } else {
+                auto decodedMessage = _decodeMessage(message);
+                out << decodedMessage << std::endl;
+            }
+            receiveInfinitelyAsync(out, errorOut);
+        });
+    });
+}
+
+void AsyncTcpClient::handleConnect(const std::error_code &error) {
+    if (error)
+        throw std::system_error(error);
+
+    receiveInfinitelyAsync(util::Logger::instance().log(), util::Logger::instance().logError());
+}
+
+std::string AsyncTcpClient::_decodeMessage(const proto::ChatMessage &message) {
     std::ostringstream decoded("Message received:\n");
 
     decoded << "Id:   " << message.id()

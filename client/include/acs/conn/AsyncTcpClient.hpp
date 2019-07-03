@@ -1,8 +1,8 @@
 /** \file 
  *  \brief Definition of the \a SyncTcpClient class.
  */
-#ifndef ACS_SYNCTCPCLIENT_HPP__
-#define ACS_SYNCTCPCLIENT_HPP__
+#ifndef ACS_ASYNCTCPCLIENT_HPP__
+#define ACS_ASYNCTCPCLIENT_HPP__
 
 #include <ostream>
 #include <asio/ip/tcp.hpp>
@@ -24,7 +24,7 @@ namespace acs::conn {
  * Final class. Has no virtual destructor.
  * \todo Use builder pattern ?
  */
-class SyncTcpClient final {
+class AsyncTcpClient final {
 public:
     /// Port number typedef.
     using port_t = std::uint16_t;
@@ -37,7 +37,7 @@ public:
      * \param remoteHost IP address of the remote to connect to
      * \param remotePort remote's port number
      */
-    explicit SyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort);
+    explicit AsyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort);
 
     /// Run infinite loop receiving data from the \a remoteHost.
     /**
@@ -45,13 +45,18 @@ public:
      * 
      * Returns when the \a remoteHost closes the connection.
      */
-    void receiveInfinitely(std::ostream &out, std::ostream &errorOut);
+    void receiveInfinitelySync(std::ostream &out, std::ostream &errorOut);
+    /**
+     * \warning no other \a receive method can be called after calling this method
+     */
+    void receiveInfinitelyAsync(std::ostream &out, std::ostream &errorOut);
 
 public:
     /// Size of the receive buffer.
     static constexpr std::size_t RECV_BUFFER_SIZE = 128;
 
 protected:
+    void handleConnect(const std::error_code &error);
     static std::string _decodeMessage(const proto::ChatMessage &message);
 
 private:
@@ -70,10 +75,12 @@ private:
 private:
     /// Client-side endpoint socket.
     asio::ip::tcp::socket _socket;
+    std::array<unsigned char, RECV_BUFFER_SIZE> _recvBuffer; // uint8_t
     /// Framing protocol prefix size in bytes.
     static std::size_t _FRAME_PREFIX_SIZE;
+
 };
 
 } // namespace acs::conn
 
-#endif // ACS_SYNCTCPCLIENT_HPP__
+#endif // ACS_ASYNCTCPCLIENT_HPP__
