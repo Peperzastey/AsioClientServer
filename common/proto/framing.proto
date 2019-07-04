@@ -1,8 +1,32 @@
 syntax = "proto3";
+option optimize_for = LITE_RUNTIME; // implement MessageLite instead of Message interface
 
 package acs.proto;
 
 message FramePrefix {
     fixed32 size = 1;
     //fixed32 user_id = 2;
+
+    enum MessageType {
+        INVALID = 0; // default value
+        ECHO = 1;
+        CHAT = 2;
+        GAME = 3;
+    }
+    /// Encodes the type of the message this prefix applies to.
+    /**
+     * Should have a value defined by the MessageType enum.
+     *
+     * Uses fixed32 instead of MessageType enum type because fixed32 type is
+     * of fixed length (always 32bits) and enums are varint-encoded (thus of
+     * variable length).
+     * Happily, the underlying type of C++-generated corresponding enum type
+     * is fixed (the type used is int).
+     *
+     * The very purpose of the FramePrefix message type is to serve as a
+     * fixed-length prefix for a proper message, so that we have a way to tell
+     * when this message ends and the next (the prefix of the next) message
+     * begins.
+     */ 
+    fixed32 type = 3;
 }

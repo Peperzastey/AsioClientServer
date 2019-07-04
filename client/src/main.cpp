@@ -1,4 +1,6 @@
 #include "acs/conn/AsyncTcpClient.hpp"
+#include "acs/cmd/AsyncCommandLoop.hpp"
+#include "acs/cmd/CommandDispatcher.hpp"
 #include "acs/util/Logger.hpp"
 #include <asio/io_context.hpp>
 #include <system_error>
@@ -35,6 +37,8 @@ int main(int argc, char *argv[]) {
 
     try {
         conn::AsyncTcpClient tcpClient(context, remoteHost, remotePort);
+        cmd::CommandDispatcher handler(tcpClient);
+        cmd::AsyncCommandLoop loop(context, handler);
         //tcpClient.receiveInfinitelyAsync(util::Logger::instance().log(), util::Logger::instance().logError()); // called callback in ctor
         context.run();
     } catch (const std::system_error &err) {

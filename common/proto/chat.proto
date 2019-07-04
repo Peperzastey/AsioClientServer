@@ -1,4 +1,5 @@
 syntax = "proto3";
+option optimize_for = LITE_RUNTIME; // implement MessageLite instead of Message interface
 
 package acs.proto;
 

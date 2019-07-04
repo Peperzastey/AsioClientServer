@@ -10,7 +10,6 @@ namespace acs::echo {
 
 void EchoClientHandler::handleStart() {
     using namespace std::string_literals;
-    using namespace proto;
 
     //TODO in CMake configure file (after (=>depends) GenerateProto target, before server)
     proto::FramePrefix framePrefix{};
@@ -23,13 +22,13 @@ void EchoClientHandler::handleStart() {
     //TODO send FramePrefix first
     // + SerializeToArray(array of size PREFIX_SIZE + '\0'??)
 
-    ChatMessage message{};
+    proto::ChatMessage message{};
     message.set_id(1);
     message.set_text(
         "Welcome to ACS chat!\n"
         "Just type your message."s
     );
-    message.set_type(ChatMessage::TEST); //TODO SYSTEM / WELCOME
+    message.set_type(proto::ChatMessage::TEST); //TODO SYSTEM / WELCOME
 
     framePrefix.set_size(message.ByteSizeLong()); // in bytes!
     const auto PREFIX_SIZE = framePrefix.ByteSizeLong();    // all fields must be set!
