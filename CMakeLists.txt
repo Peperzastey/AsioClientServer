@@ -55,11 +55,21 @@ set(COMMON_SRC
     common/src/util/Logger.cpp
     common/include/acs/util/Logger.hpp
     common/include/acs/util/Identity.hpp
+    common/src/proto/Protocol.cpp
+    common/include/acs/proto/Protocol.hpp
+    #common/src/conn/AsyncWriter.cpp
+    common/include/acs/conn/AsyncWriter.hpp
+    common/include/acs/conn/AsyncReader.hpp
+    ${PROTO_SRCS}
+    ${PROTO_HDRS}
     )
 add_library(common ${COMMON_SRC})
+# link protobuf::libprotobuf ?
 target_include_directories(common
     PUBLIC
     common/include
+    ${ASIO_INC_DIR}
+    ${PROTO_GEN_DIR}
     )
 
 # client
@@ -67,6 +77,13 @@ set(CLIENT_SRC
     client/src/main.cpp
     client/src/conn/AsyncTcpClient.cpp
     client/include/acs/conn/AsyncTcpClient.hpp
+    client/src/cmd/AsyncCommandLoop.cpp
+    client/include/acs/cmd/AsyncCommandLoop.hpp
+    client/src/cmd/CommandDispatcher.cpp
+    client/include/acs/cmd/CommandDispatcher.hpp
+    client/include/acs/cmd/CommandHandler.hpp
+    client/src/echo/EchoCommandHandler.cpp
+    client/include/acs/echo/EchoCommandHandler.hpp
     ${PROTO_SRCS}
     ${PROTO_HDRS}
     )

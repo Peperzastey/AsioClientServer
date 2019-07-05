@@ -30,13 +30,13 @@ std::string Protocol::serialize(const MessageType &message/*, enum MessageType t
     if (!result) {
         util::Logger::instance().logError() << "ERR: Failed to serialize frame prefix" << std::endl;
         //TODO throw exception
-        return;
+        return {};
     }
     result = message.AppendToString(&output);
     if (!result) {
         util::Logger::instance().logError() << "ERR: Failed to serialize chat message" << std::endl;
         //TODO throw exception
-        return;
+        return {};
     }
     assert(output.size() == PREFIX_SIZE + framePrefix.size()); // framePrefix.type must be set
 
@@ -51,7 +51,7 @@ std::size_t Protocol::getMessageSize(const void *prefixData, int size) {
     proto::FramePrefix prefix{};
     if (!prefix.ParseFromArray(prefixData, size)) {
         util::Logger::instance().logError() << "ERR: Failed to parse frame prefix" << std::endl;
-        return; //TODO throw exception
+        return {}; //TODO throw exception
     }
     
     return prefix.size();

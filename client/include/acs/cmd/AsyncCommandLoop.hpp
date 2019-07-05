@@ -2,6 +2,7 @@
 #define ACS_ASYNC_COMMAND_LOOP_HPP__
 
 #include <asio/posix/stream_descriptor.hpp>
+#include "acs/conn/AsyncReader.hpp"
 
 namespace asio {
 class io_context;
@@ -14,6 +15,7 @@ class CommandDispatcher;
 class AsyncCommandLoop {
 public:
     //using Client = conn::AsyncTcpClient;
+    using Stream = asio::posix::stream_descriptor;
 
 public:
     /// Create command loop and schedule it for asynchronous execution.
@@ -36,8 +38,9 @@ public:
 private:
     //Client &_client;
     CommandDispatcher *_handler; // unique_ptr ?
-    asio::posix::stream_descriptor _input;
-    asio::posix::stream_descriptor _output;
+    Stream _input;
+    Stream _output;
+    conn::AsyncReader<Stream> _reader;
 };
 
 } // namespace acs::cmd

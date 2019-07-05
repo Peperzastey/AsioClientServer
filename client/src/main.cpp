@@ -36,7 +36,8 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        conn::AsyncTcpClient tcpClient(context, remoteHost, remotePort);
+        proto::Protocol protocol{};
+        conn::AsyncTcpClient tcpClient(context, protocol, remoteHost, remotePort);
         cmd::CommandDispatcher handler(tcpClient);
         cmd::AsyncCommandLoop loop(context, handler);
         //tcpClient.receiveInfinitelyAsync(util::Logger::instance().log(), util::Logger::instance().logError()); // called callback in ctor

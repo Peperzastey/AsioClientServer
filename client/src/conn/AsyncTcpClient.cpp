@@ -32,8 +32,8 @@ std::size_t AsyncTcpClient::_decodeMessageSize(const proto::FramePrefix &prefix)
     return prefix.size();
 }
 
-AsyncTcpClient::AsyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort)
-    : _socket(ioContext) {
+AsyncTcpClient::AsyncTcpClient(asio::io_context &ioContext, proto::Protocol &protocol, std::string_view remoteHost, port_t remotePort)
+    : _socket(ioContext), _protocol(&protocol), _writer(_socket) {
     _initializeFramingProtocol();
     asio::ip::tcp::endpoint remote(asio::ip::make_address(remoteHost), remotePort);
     _socket.async_connect(remote, [this](auto&&... params) {
@@ -99,7 +99,7 @@ void AsyncTcpClient::receiveInfinitelySync(std::ostream &out, std::ostream &erro
 /**
  * \todo refactor this method (duplication, complication)
  */
-void AsyncTcpClient::receiveInfinitelyAsync(std::ostream &out, std::ostream &errorOut) {
+void AsyncTcpClient::receiveInfinitely(std::ostream &out, std::ostream &errorOut) {
     // read frame prefix first
     asio::async_read(_socket, asio::buffer(_recvBuffer, _FRAME_PREFIX_SIZE), [this, &out, &errorOut](const std::error_code& error, std::size_t bytes_transferred){
         if (error == asio::error::eof) {
@@ -135,16 +135,21 @@ void AsyncTcpClient::receiveInfinitelyAsync(std::ostream &out, std::ostream &err
                 auto decodedMessage = _decodeMessage(message);
                 out << decodedMessage << std::endl;
             }
-            receiveInfinitelyAsync(out, errorOut);
+            receiveInfinitely(out, errorOut);
         });
     });
+}
+
+void AsyncTcpClient::send(const proto::Protocol::MessageType &message) {
+    std::string wireMessage = _protocol->serialize(message);
+    _writer.write(std::move(wireMessage));
 }
 
 void AsyncTcpClient::handleConnect(const std::error_code &error) {
     if (error)
         throw std::system_error(error);
 
-    receiveInfinitelyAsync(util::Logger::instance().log(), util::Logger::instance().logError());
+    receiveInfinitely(util::Logger::instance().log(), util::Logger::instance().logError());
 }
 
 std::string AsyncTcpClient::_decodeMessage(const proto::ChatMessage &message) {

@@ -4,6 +4,8 @@
 #ifndef ACS_ASYNCTCPCLIENT_HPP__
 #define ACS_ASYNCTCPCLIENT_HPP__
 
+#include "acs/proto/Protocol.hpp"
+#include "acs/conn/AsyncWriter.hpp"
 #include <ostream>
 #include <asio/ip/tcp.hpp>
 
@@ -28,7 +30,10 @@ class AsyncTcpClient final {
 public:
     /// Port number typedef.
     using port_t = std::uint16_t;
+    using Socket = asio::ip::tcp::socket;
+    using Protocol = proto::Protocol;
 
+public:
     /// Constructor.
     /**
      * Connects to the provided \a remoteHost, \a service pair synchronously.
@@ -37,7 +42,7 @@ public:
      * \param remoteHost IP address of the remote to connect to
      * \param remotePort remote's port number
      */
-    explicit AsyncTcpClient(asio::io_context &ioContext, std::string_view remoteHost, port_t remotePort);
+    explicit AsyncTcpClient(asio::io_context &ioContext, Protocol &protocol, std::string_view remoteHost, port_t remotePort);
 
     /// Run infinite loop receiving data from the \a remoteHost.
     /**
@@ -49,7 +54,9 @@ public:
     /**
      * \warning no other \a receive method can be called after calling this method
      */
-    void receiveInfinitelyAsync(std::ostream &out, std::ostream &errorOut);
+    void receiveInfinitely(std::ostream &out, std::ostream &errorOut);
+    
+    void send(const proto::Protocol::MessageType &message);
 
 public:
     /// Size of the receive buffer.
@@ -74,8 +81,10 @@ private:
 
 private:
     /// Client-side endpoint socket.
-    asio::ip::tcp::socket _socket;
+    Socket _socket;
     std::array<unsigned char, RECV_BUFFER_SIZE> _recvBuffer; // uint8_t
+    Protocol *_protocol;
+    conn::AsyncWriter<Socket> _writer;
     /// Framing protocol prefix size in bytes.
     static std::size_t _FRAME_PREFIX_SIZE;
 

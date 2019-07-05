@@ -67,7 +67,7 @@ void EchoClientHandler::handleStart() {
 
 void EchoClientHandler::handleSendComplete() {
     //close();
-    _connection->close();
+    // _connection->close();
 }
 
 void EchoClientHandler::handleServerClose() {

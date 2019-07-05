@@ -53,8 +53,10 @@ void CommandDispatcher::dispatchCommand(std::string_view commandString, CommandL
     misc::trimWhitespace(commandString);
 
     // parsing (rough-and-ready)
+    //TODO parse "q", "quit"
     if (misc::startsWith(commandString, _ECHO_CMD_PREFIX)) {
         commandString.remove_prefix(_ECHO_CMD_PREFIX.size());
+        //TODO must be at least 1 whitespace after the cmd prefix
         misc::trimWhitespace(commandString, false);
         _getEchoHandler().handleCommand(commandString, commandLoop, _client);
     } else {
