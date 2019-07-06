@@ -1,5 +1,6 @@
 #include "acs/conn/TcpConnection.hpp"
 #include "acs/logic/ClientHandler.hpp"
+#include "acs/message/EchoHandler.hpp"
 #include <utility>
 
 namespace acs::conn {
@@ -20,6 +21,7 @@ std::size_t TcpConnection::_generateConnId() {
 
 void TcpConnection::start() {
     _handler->handleStart();
+    _startReceive();
 }
 
 void TcpConnection::close() {
@@ -39,21 +41,31 @@ void TcpConnection::send(std::string &&message) {
     _doSend();
 }
 
-void TcpConnection::receive(std::size_t messageSize) {
-    //TODO
-}
-
-void TcpConnection::handleWrite(const std::error_code &error, [[maybe_unused]] std::size_t bytesSend) {
+void TcpConnection::_handleWrite(const std::error_code &error, [[maybe_unused]] std::size_t bytesSend) {
     _writeInProgress = false;
     if (error) {
         //TODO
         util::Logger::instance().logError()
-            << "Connection::handleWrite err: " << error << std::endl;
+            << "Connection::_handleWrite err: " << error << std::endl;
     } else {
         util::Logger::instance().log() << "handleWrite" << std::endl;
     }
     _handler->handleSendComplete();
     // close();
+}
+
+void TcpConnection::_handleRead(const std::string &inputMessageData) {
+    //TODO move deserialization to AsyncReader (or some AsyncReader-decorator/adaptor)
+    auto message = _protocol.deserialize(inputMessageData.data(), inputMessageData.size());
+    message::EchoHandler::handleServer(*message.get(), *this);
+}
+
+void TcpConnection::_startReceive() {
+    _reader.readAsyncProtoInfOccupy([this](std::string data) {
+            _handleRead(std::move(data));
+        },
+        &_protocol
+    );
 }
 
 void TcpConnection::_doSend(/*WritePolicy*/) {
@@ -66,7 +78,7 @@ void TcpConnection::_doSend(/*WritePolicy*/) {
 
     _writeInProgress = true;
     asio::async_write(_socket, asio::buffer(_sendMsg), [this](auto&&... params) {
-        handleWrite(std::forward<decltype(params)>(params)...);
+        _handleWrite(std::forward<decltype(params)>(params)...);
     });
 }
 

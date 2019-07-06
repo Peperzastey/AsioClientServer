@@ -65,7 +65,6 @@ void EchoClientHandler::handleStart() {
     //_connection->send(std::move(serializedMessage));
 
     //TODO _connection->receiveInfinitely(); ?
-    _connection->receive(PREFIX_SIZE);
 }
 
 void EchoClientHandler::handleSendComplete() {
