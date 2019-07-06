@@ -6,6 +6,7 @@
 
 #include "acs/proto/Protocol.hpp"
 #include "acs/conn/AsyncWriter.hpp"
+#include "acs/conn/AsyncReader.hpp"
 #include <ostream>
 #include <asio/ip/tcp.hpp>
 
@@ -54,7 +55,7 @@ public:
     /**
      * \warning no other \a receive method can be called after calling this method
      */
-    void receiveInfinitely(std::ostream &out, std::ostream &errorOut);
+    void receiveInfinitely();
     
     void send(const proto::Protocol::MessageType &message);
 
@@ -63,7 +64,8 @@ public:
     static constexpr std::size_t RECV_BUFFER_SIZE = 128;
 
 protected:
-    void handleConnect(const std::error_code &error);
+    void _handleConnect(const std::error_code &error);
+    void _handleRead(const std::string &inputMessageData);
     static std::string _decodeMessage(const proto::ChatMessage &message);
 
 private:
@@ -85,6 +87,7 @@ private:
     std::array<unsigned char, RECV_BUFFER_SIZE> _recvBuffer; // uint8_t
     Protocol *_protocol;
     conn::AsyncWriter<Socket> _writer;
+    conn::AsyncReader<Socket> _reader;
     /// Framing protocol prefix size in bytes.
     static std::size_t _FRAME_PREFIX_SIZE;
 

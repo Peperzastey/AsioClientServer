@@ -60,6 +60,7 @@ set(COMMON_SRC
     #common/src/conn/AsyncWriter.cpp
     common/include/acs/conn/AsyncWriter.hpp
     common/include/acs/conn/AsyncReader.hpp
+    common/include/acs/message/EchoHandler.hpp
     ${PROTO_SRCS}
     ${PROTO_HDRS}
     )

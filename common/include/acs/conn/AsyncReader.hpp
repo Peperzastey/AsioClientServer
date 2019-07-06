@@ -3,6 +3,7 @@
 
 #include "acs/util/Logger.hpp"
 #include "acs/proto/Protocol.hpp"
+#include <asio/read.hpp>
 #include <asio/read_until.hpp>
 #include <asio/buffer.hpp>
 #include <functional>
@@ -27,13 +28,15 @@ class AsyncReader /*: public Reader*/ {
 public:
     using Stream = AsyncReadStream;
     using Callback = std::function<void(std::string)>;
+    //TODO? std::function<void(const std::string&)> - callback invoked synchronously ?
+    //      std::function<void(std::string)> - invoked asynchronously ?
 
 public:
     static constexpr std::size_t MAX_READ_BUFFER_SIZE_BYTES = 1024;
 
 // forward declaration
 private:
-    //inline bool _tryLockReading(/*ReadPolicy*/);
+    inline bool _tryLockReading(/*ReadPolicy*/);
     inline void _unlockReading();
     bool _checkError(const std::error_code &error);
     inline void _doReadUntil(char delim, bool discardDelim);
@@ -168,7 +171,7 @@ protected:
 
             // may throw
             _callback(std::move(requestedData));
-            
+
             if (!repeatReadProto)
                 _callback = nullptr;
         }
@@ -191,7 +194,7 @@ private:
             handler(this, /*std::forward<Args>(args)...*/ std::move(args)..., std::forward<decltype(asioHandlerParams)>(asioHandlerParams)...);
         };
     }
-    inline bool _tryLockReading(/*ReadPolicy*/);
+    
 private:
     Stream &_stream;
     std::size_t _maxBufferSize;
@@ -287,6 +290,8 @@ template <typename AsyncReadStream>
 void AsyncReader<AsyncReadStream>::_doReadProtoFramePrefix(bool repeatReadProtoInf) {
     assert(_protocol != nullptr);
     const auto framePrefixSize = _protocol->getFramePrefixSize();
+    if (framePrefixSize > _maxBufferSize)
+        throw std::length_error{"Frame prefix size exceeds max read buffer size"};
     // pre-C++20 capacity check before reserve to prevent shrinking
     if (_readBuffer.capacity() < framePrefixSize)
         _readBuffer.reserve(framePrefixSize);
@@ -304,6 +309,8 @@ void AsyncReader<AsyncReadStream>::_doReadProtoFramePrefix(bool repeatReadProtoI
 template <typename AsyncReadStream>
 void AsyncReader<AsyncReadStream>::_doReadProtoMessage(std::size_t messageSize, bool repeatReadProto) {
     assert(_protocol != nullptr);
+    if (messageSize > _maxBufferSize)
+        throw std::length_error{"Message size exceeds max read buffer size"};
     // pre-C++20 capacity check before reserve to prevent shrinking
     if (_readBuffer.capacity() < messageSize)
         _readBuffer.reserve(messageSize);

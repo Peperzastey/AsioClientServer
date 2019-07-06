@@ -28,11 +28,13 @@ void TcpConnection::close() {
 }
 
 void TcpConnection::send(const std::string &message) {
+    //TODO only when write not locked (i.e. in progress) <- use AsyncWriter
     _sendMsg = message;
     _doSend();
 }
 
 void TcpConnection::send(std::string &&message) {
+    //TODO only when write not locked (i.e. in progress) <- use AsyncWriter
     _sendMsg = std::move(message);
     _doSend();
 }

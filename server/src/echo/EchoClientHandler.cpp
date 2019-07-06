@@ -28,9 +28,12 @@ void EchoClientHandler::handleStart() {
         "Welcome to ACS chat!\n"
         "Just type your message."s
     );
-    message.set_type(proto::ChatMessage::TEST); //TODO SYSTEM / WELCOME
+    //message.set_type(proto::ChatMessage::TEST); //TODO SYSTEM / WELCOME
+    //TEMP
+    message.set_type(proto::ChatMessage::ECHO_RESPONSE);
 
     framePrefix.set_size(message.ByteSizeLong()); // in bytes!
+    framePrefix.set_type(proto::FramePrefix::ECHO);
     const auto PREFIX_SIZE = framePrefix.ByteSizeLong();    // all fields must be set!
     // framePrefix.user_id Don't Care
     //std::string serializedPrefix;

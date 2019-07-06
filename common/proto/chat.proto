@@ -4,7 +4,7 @@ option optimize_for = LITE_RUNTIME; // implement MessageLite instead of Message 
 package acs.proto;
 
 message ChatMessage {
-    /*required <-proto2*/ int32 id = 1;
+    /*required <-proto2*/ uint32 id = 1;
     string text = 2;
     //timestamp
     //short text

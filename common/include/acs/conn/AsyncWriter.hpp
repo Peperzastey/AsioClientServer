@@ -76,6 +76,7 @@ private:
 
 private:
     Stream &_stream;
+    //TODO? add _maxWriteBufferSize
     mutable std::string _writeBuffer;
     mutable /*atomic*/bool _writeInProgress = false;
 };
