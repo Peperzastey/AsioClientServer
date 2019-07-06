@@ -14,6 +14,8 @@ message ChatMessage {
         URGENT = 1;
         EVENT_SETTER = 2;
         EVENT_DELETER = 3;
+        ECHO_REQUEST = 4;
+        ECHO_RESPONSE = 5;
         TEST = 14;
     }
 

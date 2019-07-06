@@ -2,10 +2,12 @@
 #define ACS_ASYNC_READER_HPP__
 
 #include "acs/util/Logger.hpp"
+#include "acs/proto/Protocol.hpp"
 #include <asio/read_until.hpp>
 #include <asio/buffer.hpp>
 #include <functional>
 #include <cassert>
+#include <stdexcept>
 
 namespace acs::conn {
 
@@ -24,7 +26,6 @@ template <typename AsyncReadStream>
 class AsyncReader /*: public Reader*/ {
 public:
     using Stream = AsyncReadStream;
-    //using Callback = void(std::string/*, error*/); // or: void(*)(std::stream/*, error*/) ?
     using Callback = std::function<void(std::string)>;
 
 public:
@@ -37,6 +38,8 @@ private:
     bool _checkError(const std::error_code &error);
     inline void _doReadUntil(char delim, bool discardDelim);
     inline void _doReadUntilInfinitelyNoUnlock(char delim, bool discardDelim);
+    inline void _doReadProtoFramePrefix(bool repeatReadProtoInf = false);
+    inline void _doReadProtoMessage(std::size_t messageSize, bool repeatReadProto = false);
 
 public:
     explicit AsyncReader(Stream &stream, std::size_t maxReadBufferSizeBytes = MAX_READ_BUFFER_SIZE_BYTES)
@@ -61,6 +64,7 @@ public:
     // or another method for occupy-type infinite loop
     void readAsyncUntilDelimInf(Callback callback, char delim = '\n', bool discardDelim = true/*, TODO ReadPolicy policy = QueueRead*//*, bool occupy = false*/) {
         // must remember args - esp. callback (not as a fields because those will be reassigned)!
+        throw std::logic_error{"Function not yet implemented"};
     }
 
     /// Read async-ly in an infinite loop. Occupies this AsyncReader object (and its stream's read endpoint).
@@ -72,6 +76,15 @@ public:
         if (_tryLockReading(/*policy*/)) {
             _callback = std::move(callback);
             _doReadUntilInfinitelyNoUnlock(delim, discardDelim);
+        }
+    }
+
+    //TODO MessageCallback ? - void(proto::Protocol::MesssagePtr) - call deserialize in AsyncReader ?
+    void readAsyncProtoInfOccupy(Callback&& callback, const proto::Protocol *protocol) {
+        if (_tryLockReading(/*policy*/)) {
+            _callback = std::move(callback);
+            _protocol = protocol;
+            _doReadProtoFramePrefix(true);
         }
     }
 
@@ -87,7 +100,6 @@ protected:
             auto delimPos = _readBuffer.find(delim);
             assert(bytesTransferred == delimPos+1);
             auto requestedData = _readBuffer.substr(0, ((discardDelim) ? delimPos : delimPos+1));
-            //requestedData.shrink_to_fit();
 
             // reinitialize buffer (leaving any data after the delim for the next read op invocation)
             _readBuffer.erase(0, delimPos+1);
@@ -119,6 +131,49 @@ protected:
         }
     }
 
+    void _handleReadProtoFramePrefixFinished(bool repeatReadProto, const std::error_code &error, std::size_t bytesTransferred) {
+        if (!_checkError(error)) {
+            // assert that the data counted as transferred do not include any excessive data and do include
+            // any previously excessive data (from a previous async_read_until operation)
+            assert(bytesTransferred == _protocol->getFramePrefixSize());
+            auto messageSize = _protocol->getMessageSize(_readBuffer.data(), bytesTransferred);
+
+            // Reinitialize buffer (leaving any data after the delim for the next read op invocation)
+            // A previous async_read_until may have left more excessive data in the buffer than we need
+            // so need to preserve the now-excessive data
+            _readBuffer.erase(0, bytesTransferred);
+
+            // read message
+            _doReadProtoMessage(messageSize, repeatReadProto);
+        }
+    }
+
+    void _handleReadProtoMessageFinished(/*std::size_t messageSize, */bool repeatReadProto, const std::error_code &error, std::size_t bytesTransferred) {
+        if (!_checkError(error)) {
+            auto requestedData = _readBuffer.substr(0, bytesTransferred);
+
+            // Reinitialize buffer (leaving any data after the delim for the next read op invocation)
+            // A previous async_read_until may have left more excessive data in the buffer than we need
+            // so need to preserve the now-excessive data
+            _readBuffer.erase(0, bytesTransferred);
+
+            // read next message (starting with its prefix)
+            if (repeatReadProto)
+                // schedule next message read
+                _doReadProtoFramePrefix(true);
+            else {
+                _unlockReading();
+                _protocol = nullptr;
+            }
+
+            // may throw
+            _callback(std::move(requestedData));
+            
+            if (!repeatReadProto)
+                _callback = nullptr;
+        }
+    }
+
 private:
     template <typename... Args>
     //using _HandlerMethod = std::function<void(Args...)>;
@@ -143,6 +198,7 @@ private:
     // or std::reference_wrapper ?
     //std::function<Callback> _callback;
     Callback _callback;
+    const proto::Protocol *_protocol = nullptr;
     mutable std::string _readBuffer;
     mutable /*atomic*/bool _readInProgress = false;
 };
@@ -221,6 +277,42 @@ void AsyncReader<AsyncReadStream>::_doReadUntilInfinitelyNoUnlock(char delim, bo
     );
 }
 //TODO 1 method calling async_read_until(delim)
+
+/**
+ * Unlocks reading only on IO error.
+ * \pre Callback, read buffer and stream's reading endpoint are exclusively occupied by a call to this method.
+ * \pre _protocol is set to point to a Protocol object.
+ */
+template <typename AsyncReadStream>
+void AsyncReader<AsyncReadStream>::_doReadProtoFramePrefix(bool repeatReadProtoInf) {
+    assert(_protocol != nullptr);
+    const auto framePrefixSize = _protocol->getFramePrefixSize();
+    // pre-C++20 capacity check before reserve to prevent shrinking
+    if (_readBuffer.capacity() < framePrefixSize)
+        _readBuffer.reserve(framePrefixSize);
+    // read the protocol's frame prefix
+    asio::async_read(_stream, asio::dynamic_buffer(_readBuffer, framePrefixSize), [this, repeatReadProtoInf](auto&&... params) {
+        _handleReadProtoFramePrefixFinished(repeatReadProtoInf, std::forward<decltype(params)>(params)...);
+    });
+}
+
+/**
+ * Unlocks reading only on IO error.
+ * \pre Callback, read buffer and stream's reading endpoint are exclusively occupied by a call to this method.
+ * \pre _protocol is set to point to a Protocol object.
+ */
+template <typename AsyncReadStream>
+void AsyncReader<AsyncReadStream>::_doReadProtoMessage(std::size_t messageSize, bool repeatReadProto) {
+    assert(_protocol != nullptr);
+    // pre-C++20 capacity check before reserve to prevent shrinking
+    if (_readBuffer.capacity() < messageSize)
+        _readBuffer.reserve(messageSize);
+    // read the message
+    asio::async_read(_stream, asio::dynamic_buffer(_readBuffer, messageSize), [this/*, messageSize*/, repeatReadProto](auto&&... params) {
+        _handleReadProtoMessageFinished(/*messageSize, */repeatReadProto, std::forward<decltype(params)>(params)...);
+    });
+}
+
 
 } // namespace acs::conn
 
