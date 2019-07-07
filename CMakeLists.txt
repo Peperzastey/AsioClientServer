@@ -199,6 +199,8 @@ if(BUILD_TESTING)
     # add_executable(tests)
     # target_sources()
     # target_link_libraries(tests gmock_main pthread)
+else()
+    message ("Building of tests is disabled")
 endif()
 
 #TODO target_* commands instead of global

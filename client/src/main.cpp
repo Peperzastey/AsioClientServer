@@ -9,7 +9,7 @@
 
 using namespace acs;
 
-constexpr std::string_view DEFAULT_REMOTE_HOST = "127.0.0.1";
+constexpr std::string_view DEFAULT_REMOTE_HOST = "::1";
 constexpr conn::AsyncTcpClient::port_t DEFAULT_REMOTE_PORT = 54321;
 
 /// The entry point to the client application.
@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
     auto remotePort = DEFAULT_REMOTE_PORT;
     if (argc > 1) {
         //TODO use std::from_chars (C++17)
+        // to prevent incorrect input from being treated as 0 so any port
         remotePort = std::atoi(argv[1]);
     }
     if (argc > 2) {

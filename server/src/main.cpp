@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
     auto portNum = DEFAULT_PORT;
     if (argc > 1) {
         //TODO use std::from_chars (C++17)
+        // to prevent incorrect input from being treated as 0 so any port
         portNum = std::atoi(argv[1]);
     }
 
