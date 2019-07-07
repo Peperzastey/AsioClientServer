@@ -15,3 +15,16 @@ Functions:
 ## Other requirements
 - CMake 3.1+ (build system)
 - [GTest & GMock](https://github.com/google/googletest) (when building tests)
+- Doxygen (for generating documentation)
+
+## Build instruction
+```
+> mkdir build && cd build
+> cmake ..
+> make
+```
+
+## Generate docs
+```
+doxygen Doxyfile
+```
