@@ -43,11 +43,11 @@ __NOTE:__ the server app listens on all(any) network interfaces (as per [`in6add
 - [Asio](http://think-async.com/Asio/) ([standalone](https://github.com/chriskohlhoff/asio))
 - [Protobuf](https://github.com/protocolbuffers/protobuf) compiler and libraries (for C++)
 
-\*\* due to using POSIX-specific Asio classes for async operations of stdin and stdout  
+\*\* due to using POSIX-specific Asio classes for async operations on stdin and stdout  
 There are, however, Windows-specific counterparts that may be used in this project someday, enabling it to also be run on Windows
 
 ## Other requirements
-- CMake 3.1+ (build system) with CTest
+- CMake 3.9+ (build system) with CTest
 - [GTest & GMock](https://github.com/google/googletest) (when building tests)
 - Doxygen (for generating documentation)
 
