@@ -1,9 +1,10 @@
 syntax = "proto3";
+option optimize_for = LITE_RUNTIME; // implement MessageLite instead of Message interface
 
 package acs.proto;
 
 message ChatMessage {
-    /*required <-proto2*/ int32 id = 1;
+    /*required <-proto2*/ uint32 id = 1;
     string text = 2;
     //timestamp
     //short text
@@ -13,6 +14,8 @@ message ChatMessage {
         URGENT = 1;
         EVENT_SETTER = 2;
         EVENT_DELETER = 3;
+        ECHO_REQUEST = 4;
+        ECHO_RESPONSE = 5;
         TEST = 14;
     }
 

@@ -1,4 +1,5 @@
 #include "acs/conn/AsyncTcpServer.hpp"
+//#include "acs/proto/Protocol.hpp"
 #include "acs/util/Logger.hpp"
 #include <asio/io_context.hpp>
 #include <system_error>
@@ -23,7 +24,8 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        conn::AsyncTcpServer tcpServer(context, portNum);
+        //proto::Protocol protocol{};
+        conn::AsyncTcpServer tcpServer(context, /*protocol,*/ portNum);
 
         util::Logger::instance().log() << "Server listening on port " << portNum << " on any interface."
             << std::endl;

@@ -32,6 +32,7 @@ endif()
 
 # common
 set(PROTO_FILES
+    common/proto/framing.proto
     common/proto/chat.proto
     )
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
@@ -40,7 +41,6 @@ message ("PROTO_SRCS = ${PROTO_SRCS}")
 message ("PROTO_HDRS = ${PROTO_HDRS}")
 add_custom_target(GenerateProto
     DEPENDS ${PROTO_SRCS} ${PROTO_HDRS}
-    COMMENT "Generate sources from proto files"
     )
 # generate_proto_sources script: configure_file() / file(GENERATE)
 # add_custom_target(GenerateProto
@@ -55,18 +55,36 @@ set(COMMON_SRC
     common/src/util/Logger.cpp
     common/include/acs/util/Logger.hpp
     common/include/acs/util/Identity.hpp
+    common/src/proto/Protocol.cpp
+    common/include/acs/proto/Protocol.hpp
+    #common/src/conn/AsyncWriter.cpp
+    common/include/acs/conn/AsyncWriter.hpp
+    common/include/acs/conn/AsyncReader.hpp
+    common/include/acs/message/EchoHandler.hpp
+    ${PROTO_SRCS}
+    ${PROTO_HDRS}
     )
 add_library(common ${COMMON_SRC})
+# link protobuf::libprotobuf ?
 target_include_directories(common
     PUBLIC
     common/include
+    ${ASIO_INC_DIR}
+    ${PROTO_GEN_DIR}
     )
 
 # client
 set(CLIENT_SRC
     client/src/main.cpp
-    client/src/conn/SyncTcpClient.cpp
-    client/include/acs/conn/SyncTcpClient.hpp
+    client/src/conn/AsyncTcpClient.cpp
+    client/include/acs/conn/AsyncTcpClient.hpp
+    client/src/cmd/AsyncCommandLoop.cpp
+    client/include/acs/cmd/AsyncCommandLoop.hpp
+    client/src/cmd/CommandDispatcher.cpp
+    client/include/acs/cmd/CommandDispatcher.hpp
+    client/include/acs/cmd/CommandHandler.hpp
+    client/src/echo/EchoCommandHandler.cpp
+    client/include/acs/echo/EchoCommandHandler.hpp
     ${PROTO_SRCS}
     ${PROTO_HDRS}
     )
@@ -91,6 +109,8 @@ set(SERVER_SRC
     server/src/conn/TcpConnection.cpp
     server/include/acs/conn/TcpConnection.hpp
     server/include/acs/logic/ClientHandler.hpp
+    server/src/echo/EchoClientHandler.cpp
+    server/include/acs/echo/EchoClientHandler.hpp
     server/src/debug/TestClientHandler.cpp
     server/include/acs/debug/TestClientHandler.hpp
     ${PROTO_SRCS}

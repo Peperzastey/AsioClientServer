@@ -5,7 +5,9 @@
 #define ACS_TCPCONNECTION_HPP__
 
 #include "acs/conn/ConnectionStateListener.hpp"
+#include "acs/proto/Protocol.hpp"
 #include "acs/logic/ClientHandler.hpp"
+#include "acs/conn/AsyncReader.hpp"
 #include "acs/util/Logger.hpp"
 #include "acs/util/Identity.hpp"
 #include <memory>
@@ -32,7 +34,8 @@ public:
      */
     template <typename ClientHandlerT>
     TcpConnection(asio::io_context &ioContext, ConnectionStateListener &observer, util::Identity<ClientHandlerT> handlerType)
-        : _socket(ioContext), _id(_generateConnId()), _handler(std::make_unique<typename decltype(handlerType)::type>(*this)), _observer(observer) {}
+        : _socket(ioContext), _id(_generateConnId()), _reader(_socket),
+          _handler(std::make_unique<typename decltype(handlerType)::type>(*this)), _observer(observer) {}
     // implement by hand - bool _writeInProgress, size_t _id, ... need to be copied (built-in type)
     // thus move ctor is temporarily disabled
     //TcpConnection(TcpConnection&&) = default;
@@ -46,6 +49,9 @@ public:
     /// Close the connection.
     void close();
     /// Send the \a message to the connected client.
+    /**
+     * \todo add Async to the names
+     */
     void send(const std::string &message /*, TODO WritePolicy policy = QueueWrite*/);
     void send(std::string &&message /*, WritePolicy policy = QueueWrite*/);
 
@@ -56,6 +62,18 @@ public:
     /// Get connection id.
     std::size_t getId() const noexcept {
         return _id;
+    }
+    /// Get protocol object.
+    const proto::Protocol& getProtocol() const noexcept {
+        return _protocol;
+    }
+
+    /// Set message descriptor fixed wire-size.
+    /**
+     * \note Must be set before invoking any \a receive method.
+     */
+    static void setMessageDescriptorSize(std::size_t size) noexcept {
+        _MESSAGE_DESCR_SIZE = size;
     }
 
 public:
@@ -68,10 +86,13 @@ public:
     }
 
 protected:
-    void handleWrite(const std::error_code &error, std::size_t bytesSend);
+    void _handleWrite(const std::error_code &error, std::size_t bytesSend);
+    void _handleRead(const std::string &inputMessageData);
 
 private:
     static std::size_t _generateConnId();
+    /// Start receive infinite loop.
+    void _startReceive();
     void _doSend(/*WritePolicy*/);
 
 private:
@@ -79,8 +100,12 @@ private:
     asio::ip::tcp::socket _socket;
     /// Identifies the connection.
     std::size_t _id;
+    /// Reader.
+    conn::AsyncReader<asio::ip::tcp::socket> _reader;
     /// Client-server interaction handler.
     std::unique_ptr<logic::ClientHandler> _handler;
+    /// Protocol object.
+    proto::Protocol _protocol;
     /// Message to send to the connected peer.
     /**
      * Holds the message until it is (asynchronously) sent.
@@ -91,6 +116,8 @@ private:
      * No other write operation on the same stream (socket) can interleave with any other compound operation.
      */
     mutable /*atomic*/ bool _writeInProgress = false;
+    /// Message descriptor (framing protocol for ChatMessage) fixed wire-size.
+    static std::size_t _MESSAGE_DESCR_SIZE;
 
 protected:
     /// State changes observer.
