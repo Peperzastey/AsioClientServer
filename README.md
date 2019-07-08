@@ -21,11 +21,11 @@ Both client and server execute on a single thread using Asio's event loop
 ### Usage:
 1. Run the server app
 ```
-> .\server [listen-port]
+> ./server [listen-port]
 ```
 2. Run clients apps
 ```
-> .\client [server-listen-port] [server-host]
+> ./client [server-listen-port] [server-host]
 ```
 You can close the _server_ app by sending the `SIGINT` signal to it. `Ctrl`+`C` from the terminal running the server in foreground.
 
@@ -70,7 +70,7 @@ Run `make test` or `ctest` from the _build_ directory.
 
 You can also run test executable directly (also from the _build_ dir):
 ```
-> .\tests [gtest/gmock flags]
+> ./tests [gtest/gmock flags]
 ```  
 This option gives you the possibility to provide additional flags (e.g. to only list test cases names or filter tests to run) and outputs detailed test results.
 
