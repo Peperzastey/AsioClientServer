@@ -16,16 +16,14 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads) # REQUIRED ?
 
 # find Asio headers
+# uses standalone Asio (without Boost dependencies)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(Asio REQUIRED)
 if(Asio_FOUND)
-    message ("Asio include dir: ${Asio_INCLUDE_DIRS}")
+    message ("Asio include dirs: ${Asio_INCLUDE_DIRS}")
 endif()
-# use standalone Asio (without Boost dependencies)
-#TODO set in FindAsio.cmake / define macro in config file (beside optional debug macros)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DASIO_STANDALONE")
 
-# find the protobuf compiler and libraries
+# find the Protobuf compiler and libraries
 find_package(Protobuf REQUIRED)
 if(Protobuf_FOUND)
     message ("Protobuf include dir: ${Protobuf_INCLUDE_DIRS}")   
@@ -44,29 +42,14 @@ if(BUILD_TESTING)
     # server/tests
     # client/tests
 
-    #Single test executable:
-    # file(WRITE dummy.cpp "")
-    # add_executable(tests dummy.cpp)
-    # target_link_libraries(tests
-    #     PRIVATE
-    #     gmock_main
-    #     commonTestsLib
-    #     serverTestsLib
-    #     clientTestsLib
-    #     Threads::Threads
-    #     )
-
     if(NOT TARGET commonTests)
         add_custom_target(commonTests)  # empty
-        #TODO ALL?
     endif()
     if(NOT TARGET serverTests)
         add_custom_target(serverTests)  # empty
-        #TODO ALL?
     endif()
     if(NOT TARGET clientTests)
         add_custom_target(clientTests)  # empty
-        #TODO ALL?
     endif()
 
     add_custom_target(AllTests ALL)

@@ -78,10 +78,11 @@ foreach(Camel
     set(${UPPER} ${${Camel}})
 endforeach()
 
-#Add Asio::Asio imported target?
-# add_library(Asio::Asio INTERFACE IMPORTED GLOBAL)
-# set_target_properties(Asio::Asio PROPERTIES
-#     INTERFACE_COMPILE_DEFINITIONS "ASIO_STANDALONE"
-#     INTERFACE_INCLUDE_DIRECTORIES "${ASIO_INCLUDE_DIR}"
-# )
-# target_link_libraries(Asio::Asio INTERFACE Threads::Threads)
+# Add asio::standalone imported target
+add_library(asio::standalone INTERFACE IMPORTED GLOBAL) #TODO try without GLOBAL
+set_target_properties(asio::standalone PROPERTIES
+    INTERFACE_COMPILE_DEFINITIONS "ASIO_STANDALONE"
+    INTERFACE_INCLUDE_DIRECTORIES "${Asio_INCLUDE_DIR}"
+)
+#TODO target_link_libraries(asio::standalone INTERFACE Threads::Threads)
+#OR SHOULD set_target_properties() INTERFACE_LINK_LIBRARIES ?
