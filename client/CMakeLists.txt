@@ -23,7 +23,7 @@ target_include_directories(client
         include
         #TODO common/include
         ${COMMON_INCLUDE}
-        ${Asio_INCLUDE_DIR}
+        ${Asio_INCLUDE_DIRS}
         ${PROTO_GEN_DIR}
     )
 

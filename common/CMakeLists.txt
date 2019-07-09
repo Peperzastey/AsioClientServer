@@ -42,7 +42,7 @@ target_include_directories(common
         include
         ${PROTO_GEN_DIR} #TEMP until dependency refactor
     PRIVATE
-        ${Asio_INCLUDE_DIR}
+        ${Asio_INCLUDE_DIRS}
         # ${PROTO_GEN_DIR}
         #${Protobuf_INCLUDE_DIRS}
     )

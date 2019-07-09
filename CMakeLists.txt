@@ -16,20 +16,19 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads) # REQUIRED ?
 
 # find Asio headers
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(Asio REQUIRED)
 if(Asio_FOUND)
-    message ("Asio include dir: ${Asio_INCLUDE_DIR}")
+    message ("Asio include dir: ${Asio_INCLUDE_DIRS}")
 endif()
 # use standalone Asio (without Boost dependencies)
 #TODO set in FindAsio.cmake / define macro in config file (beside optional debug macros)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DASIO_STANDALONE")
-# set(Asio_INCLUDE_DIR /home/przemek/Dirs/libs/asio-1.12.2/include)
 
 # find the protobuf compiler and libraries
 find_package(Protobuf REQUIRED)
 if(Protobuf_FOUND)
-    message ("Protobuf include dir: ${Protobuf_INCLUDE_DIR}")   
+    message ("Protobuf include dir: ${Protobuf_INCLUDE_DIRS}")   
 endif()
 
 add_subdirectory(common)
