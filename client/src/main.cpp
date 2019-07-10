@@ -44,8 +44,13 @@ int main(int argc, char *argv[]) {
         //tcpClient.receiveInfinitelyAsync(util::Logger::instance().log(), util::Logger::instance().logError()); // called callback in ctor
         context.run();
     } catch (const std::system_error &err) {
-        util::Logger::instance().logError() << "EXCEPTION CAUGHT:\n"
+        util::Logger::instance().logError() << "SYSTEM_ERROR CAUGHT:\n"
             << err.code() << ": " << err.what()
+            << std::endl;
+    //TODO create domain exception hierarchy
+    } catch (const std::exception &err) {
+        util::Logger::instance().logError() << "EXCEPTION CAUGHT:\n"
+            << err.what()
             << std::endl;
     }
 

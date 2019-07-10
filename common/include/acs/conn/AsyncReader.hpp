@@ -249,6 +249,7 @@ bool AsyncReader<AsyncReadStream>::_checkError(const std::error_code &error) {
     }
     if (error) {
         _unlockReading();
+        //TODO invoke callback passed from caller (both on EOF and NoBufferSpace)
         throw std::system_error(error);
     }
 
