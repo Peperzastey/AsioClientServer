@@ -16,7 +16,7 @@ class io_context;
 
 namespace acs::proto {
 class FramePrefix;
-class ChatMessage;
+class ChatPacket;
 } // namespace acs::proto
 
 /// Contains connection functionality.
@@ -44,14 +44,7 @@ public:
      * \param remotePort remote's port number
      */
     explicit AsyncTcpClient(asio::io_context &ioContext, Protocol &protocol, std::string_view remoteHost, port_t remotePort);
-
-    /// Run infinite loop receiving data from the \a remoteHost.
-    /**
-     * Runs synchronously.
-     * 
-     * Returns when the \a remoteHost closes the connection.
-     */
-    void receiveInfinitelySync(std::ostream &out, std::ostream &errorOut);
+    
     /**
      * \warning no other \a receive method can be called after calling this method
      */
@@ -66,7 +59,7 @@ public:
 protected:
     void _handleConnect(const std::error_code &error);
     void _handleRead(const std::string &inputMessageData);
-    static std::string _decodeMessage(const proto::ChatMessage &message);
+    static std::string _decodeMessage(const proto::ChatPacket &message);
 
 private:
     /// Initialize framing protocol.

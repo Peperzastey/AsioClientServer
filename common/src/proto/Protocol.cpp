@@ -37,7 +37,7 @@ std::string Protocol::serialize(const MessageType &message/*, enum MessageType t
 Protocol::MessagePtr Protocol::deserialize(const void *data, int size) const {
     //TEMP hardcoded ECHO message type
     assert(_deserFramePrefixCache.type() == proto::FramePrefix::ECHO);
-    auto message = std::make_unique<proto::ChatMessage>();
+    auto message = std::make_unique<proto::ChatPacket>();
 
     if (!message->ParseFromArray(data, size)) {
         //util::Logger::instance().logError() << "ERR: Failed to parse chat message" << std::endl;

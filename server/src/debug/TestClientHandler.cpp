@@ -8,10 +8,10 @@ namespace acs::debug {
 
 void TestClientHandler::handleStart() {
     using namespace proto;
-    ChatMessage message{};
+    ChatPacket message{};
     message.set_id(6);
     message.set_text("Test text\nNext test line.\n");
-    message.set_type(ChatMessage::TEST);
+    message.set_type(ChatPacket::NORMAL);
 
     std::string output;
     auto result = message.SerializeToString(&output);

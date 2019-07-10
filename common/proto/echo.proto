@@ -1,0 +1,19 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+
+package acs.proto;
+
+message EchoPacket {
+    uint32 id = 1;
+    string text = 2;
+    reserved 3;
+    reserved "timestamp";
+
+    enum EchoType {
+        INVALID = 0; // default value
+        ECHO_REQUEST = 1;
+        ECHO_RESPONSE = 2;
+    }
+
+    EchoType type = 4;
+}

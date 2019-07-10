@@ -1,5 +1,6 @@
 set(PROTO_FILES
     framing.proto
+    echo.proto
     chat.proto
 )
 

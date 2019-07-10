@@ -116,7 +116,7 @@ private:
      * No other write operation on the same stream (socket) can interleave with any other compound operation.
      */
     mutable /*atomic*/ bool _writeInProgress = false;
-    /// Message descriptor (framing protocol for ChatMessage) fixed wire-size.
+    /// Message descriptor (framing protocol for ChatPacket) fixed wire-size.
     static std::size_t _MESSAGE_DESCR_SIZE;
 
 protected:

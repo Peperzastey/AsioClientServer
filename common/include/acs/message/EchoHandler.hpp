@@ -3,7 +3,7 @@
 
 #include "acs/util/Logger.hpp"
 #include "acs/proto/Protocol.hpp"
-#include "chat.pb.h"
+#include "echo.pb.h"
 #include <google/protobuf/message_lite.h>
 #include <utility>
 #include <stdexcept>
@@ -24,11 +24,11 @@ public:
             << "DBG: handle Echo receive client" << std::endl;
         //need dynamic_cast
         //TODO static_cast if we are 100% certain of dynamic (runtime) type - avoids the cost of the runtime check
-        auto echoMessage = dynamic_cast<proto::ChatMessage*>(&message);
+        auto echoMessage = dynamic_cast<proto::EchoPacket*>(&message);
         if (echoMessage == nullptr)
-            throw std::domain_error{"Provided message is not of type proto::ChatMessage"};
+            throw std::domain_error{"Provided message is not of type proto::EchoPacket"};
         //TEMP assume ECHO_RESPONSE MessageType
-        assert(echoMessage->type() == proto::ChatMessage::ECHO_RESPONSE);
+        assert(echoMessage->type() == proto::EchoPacket::ECHO_RESPONSE);
 
         // handler logic
         //TEMP display on logger
@@ -43,14 +43,14 @@ public:
             << "DBG: handle Echo receive server" << std::endl;
         //need dynamic_cast
         //TODO static_cast if we are 100% certain of dynamic (runtime) type - avoids the cost of the runtime check
-        auto echoMessage = dynamic_cast<proto::ChatMessage*>(&message);
+        auto echoMessage = dynamic_cast<proto::EchoPacket*>(&message);
         if (echoMessage == nullptr)
-            throw std::domain_error{"Provided message is not of type proto::ChatMessage"};
+            throw std::domain_error{"Provided message is not of type proto::EchoPacket"};
         //TEMP assume ECHO_REQUEST MessageType
-        assert(echoMessage->type() == proto::ChatMessage::ECHO_REQUEST);
+        assert(echoMessage->type() == proto::EchoPacket::ECHO_REQUEST);
 
         // handler logic
-        echoMessage->set_type(proto::ChatMessage::ECHO_RESPONSE);
+        echoMessage->set_type(proto::EchoPacket::ECHO_RESPONSE);
         //sender.getProtocol().serialize(*echoMessage);
         auto wireMessage = sender.getProtocol().serialize(message);
         sender.send(std::move(wireMessage));

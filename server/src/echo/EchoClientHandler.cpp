@@ -2,7 +2,7 @@
 #include "acs/conn/TcpConnection.hpp"
 #include "acs/util/Logger.hpp"
 #include "framing.pb.h"
-#include "chat.pb.h"
+#include "echo.pb.h"
 #include <utility>
 #include <cassert>
 
@@ -13,8 +13,8 @@ void EchoClientHandler::handleStart() {
 
     //TODO in CMake configure file (after (=>depends) GenerateProto target, before server)
     proto::FramePrefix framePrefix{};
-    //TODO somewhere outside of TcpConnection <- reading FramePrefix and invoking ChatMessage collection
-    //or FramePrefix as first part of ChatMessage and use SerializePartial...() ?
+    //TODO somewhere outside of TcpConnection <- reading FramePrefix and invoking EchoPacket collection
+    //or FramePrefix as first part of EchoPacket and use SerializePartial...() ?
     
     //conn::TcpConnection::setFramePrefixSize(dummy.ByteSizeLong());  
 
@@ -22,15 +22,15 @@ void EchoClientHandler::handleStart() {
     //TODO send FramePrefix first
     // + SerializeToArray(array of size PREFIX_SIZE + '\0'??)
 
-    proto::ChatMessage message{};
+    proto::EchoPacket message{};
     message.set_id(1);
     message.set_text(
         "Welcome to ACS chat!\n"
         "Just type your message."s
     );
-    //message.set_type(proto::ChatMessage::TEST); //TODO SYSTEM / WELCOME
+    //message.set_type(proto::EchoPacket::TEST); //TODO SYSTEM / WELCOME
     //TEMP
-    message.set_type(proto::ChatMessage::ECHO_RESPONSE);
+    message.set_type(proto::EchoPacket::ECHO_RESPONSE);
 
     framePrefix.set_size(message.ByteSizeLong()); // in bytes!
     framePrefix.set_type(proto::FramePrefix::ECHO);
