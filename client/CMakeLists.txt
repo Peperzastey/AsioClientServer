@@ -4,7 +4,7 @@ set(CLIENT_SRCS
     src/conn/AsyncTcpClient.cpp
     src/cmd/AsyncCommandLoop.cpp
     src/cmd/CommandDispatcher.cpp
-    src/echo/EchoCommandHandler.cpp   
+    src/echo/EchoCommandHandler.cpp  
 )
 set(CLIENT_HDRS
     include/acs/conn/AsyncTcpClient.hpp
@@ -12,6 +12,7 @@ set(CLIENT_HDRS
     include/acs/cmd/CommandDispatcher.hpp
     include/acs/cmd/CommandHandler.hpp
     include/acs/echo/EchoCommandHandler.hpp
+    include/acs/message/EchoMessage.hpp
 )
 
 add_executable(client ${CLIENT_SRCS} ${CLIENT_HDRS})

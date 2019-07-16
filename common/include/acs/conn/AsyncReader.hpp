@@ -3,6 +3,7 @@
 
 #include "acs/util/Logger.hpp"
 #include "acs/proto/Protocol.hpp"
+#include "acs/proto/PolymorphicMsgProtocol.hpp"
 #include <asio/read.hpp>
 #include <asio/read_until.hpp>
 #include <asio/buffer.hpp>
@@ -27,6 +28,7 @@ template <typename AsyncReadStream>
 class AsyncReader /*: public Reader*/ {
 public:
     using Stream = AsyncReadStream;
+    using PMProtocol = proto::PolymorphicMsgProtocol;
     using Callback = std::function<void(std::string)>;
     //TODO? std::function<void(const std::string&)> - callback invoked synchronously ?
     //      std::function<void(std::string)> - invoked asynchronously ?
@@ -43,6 +45,8 @@ private:
     inline void _doReadUntilInfinitelyNoUnlock(char delim, bool discardDelim);
     inline void _doReadProtoFramePrefix(bool repeatReadProtoInf = false);
     inline void _doReadProtoMessage(std::size_t messageSize, bool repeatReadProto = false);
+    inline void _doReadPMProtoFramePrefix(bool repeatReadProtoInf = false);
+    inline void _doReadPMProtoMessage(std::size_t messageSize, bool repeatReadProto = false);
 
 public:
     explicit AsyncReader(Stream &stream, std::size_t maxReadBufferSizeBytes = MAX_READ_BUFFER_SIZE_BYTES)
@@ -88,6 +92,15 @@ public:
             _callback = std::move(callback);
             _protocol = protocol;
             _doReadProtoFramePrefix(true);
+        }
+    }
+
+    //TEMP PMProtocol
+    void readAsyncProtoInfOccupy(Callback&& callback, const PMProtocol *protocol) {
+        if (_tryLockReading(/*policy*/)) {
+            _callback = std::move(callback);
+            _pmProtocol = protocol;
+            _doReadPMProtoFramePrefix(true);
         }
     }
 
@@ -151,6 +164,24 @@ protected:
         }
     }
 
+    //TEMP PMProtocol
+    void _handleReadPMProtoFramePrefixFinished(bool repeatReadProto, const std::error_code &error, std::size_t bytesTransferred) {
+        if (!_checkError(error)) {
+            // assert that the data counted as transferred do not include any excessive data and do include
+            // any previously excessive data (from a previous async_read_until operation)
+            assert(bytesTransferred == _pmProtocol->getFramePrefixSize());
+            auto messageSize = _pmProtocol->getPacketSize(_readBuffer.data(), bytesTransferred);
+
+            // Reinitialize buffer (leaving any data after the delim for the next read op invocation)
+            // A previous async_read_until may have left more excessive data in the buffer than we need
+            // so need to preserve the now-excessive data
+            _readBuffer.erase(0, bytesTransferred);
+
+            // read message
+            _doReadPMProtoMessage(messageSize, repeatReadProto);
+        }
+    }
+
     void _handleReadProtoMessageFinished(/*std::size_t messageSize, */bool repeatReadProto, const std::error_code &error, std::size_t bytesTransferred) {
         if (!_checkError(error)) {
             auto requestedData = _readBuffer.substr(0, bytesTransferred);
@@ -167,6 +198,33 @@ protected:
             else {
                 _unlockReading();
                 _protocol = nullptr;
+            }
+
+            // may throw
+            _callback(std::move(requestedData));
+
+            if (!repeatReadProto)
+                _callback = nullptr;
+        }
+    }
+
+    //TEMP PMProtocol
+    void _handleReadPMProtoMessageFinished(/*std::size_t messageSize, */bool repeatReadProto, const std::error_code &error, std::size_t bytesTransferred) {
+        if (!_checkError(error)) {
+            auto requestedData = _readBuffer.substr(0, bytesTransferred);
+
+            // Reinitialize buffer (leaving any data after the delim for the next read op invocation)
+            // A previous async_read_until may have left more excessive data in the buffer than we need
+            // so need to preserve the now-excessive data
+            _readBuffer.erase(0, bytesTransferred);
+
+            // read next message (starting with its prefix)
+            if (repeatReadProto)
+                // schedule next message read
+                _doReadPMProtoFramePrefix(true);
+            else {
+                _unlockReading();
+                _pmProtocol = nullptr;
             }
 
             // may throw
@@ -202,6 +260,8 @@ private:
     //std::function<Callback> _callback;
     Callback _callback;
     const proto::Protocol *_protocol = nullptr;
+    //TEMP for client only
+    const PMProtocol *_pmProtocol = nullptr;
     mutable std::string _readBuffer;
     mutable /*atomic*/bool _readInProgress = false;
 };
@@ -302,6 +362,22 @@ void AsyncReader<AsyncReadStream>::_doReadProtoFramePrefix(bool repeatReadProtoI
     });
 }
 
+//TEMP PMProtocol
+template <typename AsyncReadStream>
+void AsyncReader<AsyncReadStream>::_doReadPMProtoFramePrefix(bool repeatReadProtoInf) {
+    assert(_pmProtocol != nullptr);
+    const auto framePrefixSize = _pmProtocol->getFramePrefixSize();
+    if (framePrefixSize > _maxBufferSize)
+        throw std::length_error{"Frame prefix size exceeds max read buffer size"};
+    // pre-C++20 capacity check before reserve to prevent shrinking
+    if (_readBuffer.capacity() < framePrefixSize)
+        _readBuffer.reserve(framePrefixSize);
+    // read the protocol's frame prefix
+    asio::async_read(_stream, asio::dynamic_buffer(_readBuffer, framePrefixSize), [this, repeatReadProtoInf](auto&&... params) {
+        _handleReadPMProtoFramePrefixFinished(repeatReadProtoInf, std::forward<decltype(params)>(params)...);
+    });
+}
+
 /**
  * Unlocks reading only on IO error.
  * \pre Callback, read buffer and stream's reading endpoint are exclusively occupied by a call to this method.
@@ -318,6 +394,21 @@ void AsyncReader<AsyncReadStream>::_doReadProtoMessage(std::size_t messageSize, 
     // read the message
     asio::async_read(_stream, asio::dynamic_buffer(_readBuffer, messageSize), [this/*, messageSize*/, repeatReadProto](auto&&... params) {
         _handleReadProtoMessageFinished(/*messageSize, */repeatReadProto, std::forward<decltype(params)>(params)...);
+    });
+}
+
+//TEMP PMProtocol
+template <typename AsyncReadStream>
+void AsyncReader<AsyncReadStream>::_doReadPMProtoMessage(std::size_t messageSize, bool repeatReadProto) {
+    assert(_pmProtocol != nullptr);
+    if (messageSize > _maxBufferSize)
+        throw std::length_error{"Message size exceeds max read buffer size"};
+    // pre-C++20 capacity check before reserve to prevent shrinking
+    if (_readBuffer.capacity() < messageSize)
+        _readBuffer.reserve(messageSize);
+    // read the message
+    asio::async_read(_stream, asio::dynamic_buffer(_readBuffer, messageSize), [this/*, messageSize*/, repeatReadProto](auto&&... params) {
+        _handleReadPMProtoMessageFinished(/*messageSize, */repeatReadProto, std::forward<decltype(params)>(params)...);
     });
 }
 

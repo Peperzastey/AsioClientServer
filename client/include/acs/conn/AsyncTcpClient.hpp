@@ -4,7 +4,7 @@
 #ifndef ACS_ASYNCTCPCLIENT_HPP__
 #define ACS_ASYNCTCPCLIENT_HPP__
 
-#include "acs/proto/Protocol.hpp"
+#include "acs/proto/PolymorphicMsgProtocol.hpp"
 #include "acs/conn/AsyncWriter.hpp"
 #include "acs/conn/AsyncReader.hpp"
 #include <ostream>
@@ -32,7 +32,7 @@ public:
     /// Port number typedef.
     using port_t = std::uint16_t;
     using Socket = asio::ip::tcp::socket;
-    using Protocol = proto::Protocol;
+    using Protocol = proto::PolymorphicMsgProtocol;
 
 public:
     /// Constructor.
@@ -50,7 +50,7 @@ public:
      */
     void receiveInfinitely();
     
-    void send(const proto::Protocol::MessageType &message);
+    void send(const Protocol::Message &message);
 
 public:
     /// Size of the receive buffer.
@@ -67,12 +67,6 @@ private:
      * Must be called before any \a receive method.
      */
     static void _initializeFramingProtocol();
-    /// Decode message size from framing protocol's prefix.
-    /**
-     * Pre-condition: Framing protocol must be initialized.
-     * \see _initializeFramingProtocol
-     */
-    static std::size_t _decodeMessageSize(const proto::FramePrefix &prefix);
 
 private:
     /// Client-side endpoint socket.
@@ -82,7 +76,7 @@ private:
     conn::AsyncWriter<Socket> _writer;
     conn::AsyncReader<Socket> _reader;
     /// Framing protocol prefix size in bytes.
-    static std::size_t _FRAME_PREFIX_SIZE;
+    //static std::size_t _FRAME_PREFIX_SIZE;
 
 };
 

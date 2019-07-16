@@ -1,3 +1,7 @@
+#include "acs/message/MessageRegistry.hpp"
+#include "acs/message/MessageRegisterer.hpp"
+#include "acs/message/EchoMessage.hpp"
+#include "acs/proto/PolymorphicMsgProtocol.hpp"
 #include "acs/conn/AsyncTcpClient.hpp"
 #include "acs/cmd/AsyncCommandLoop.hpp"
 #include "acs/cmd/CommandDispatcher.hpp"
@@ -6,6 +10,7 @@
 #include <system_error>
 #include <string_view>
 #include <iostream>
+#include "framing.pb.h"
 
 using namespace acs;
 
@@ -37,7 +42,14 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        proto::Protocol protocol{};
+        message::MessageRegistry msgRegistry{};
+        message::MessageRegisterer msgRegisterer(msgRegistry);
+        //TODO encapsulate message types in separate domain class/struct
+        msgRegisterer.registerMessageType<message::EchoMessage>(proto::FramePrefix::ECHO);
+        //static_cast<message::MessageRegisterer::MessageTypeId>(proto::FramePrefix::ECHO)
+
+        proto::PolymorphicMsgProtocol protocol(msgRegistry);
+
         conn::AsyncTcpClient tcpClient(context, protocol, remoteHost, remotePort);
         cmd::CommandDispatcher handler(tcpClient);
         cmd::AsyncCommandLoop loop(context, handler);

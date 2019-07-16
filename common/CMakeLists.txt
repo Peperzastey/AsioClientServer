@@ -4,15 +4,20 @@ add_subdirectory(proto)
 set(COMMON_SRCS
     src/util/Logger.cpp
     src/proto/Protocol.cpp
-    #src/conn/AsyncWriter.cpp
+    src/proto/PolymorphicMsgProtocol.cpp
 )
 set(COMMON_HDRS
     include/acs/util/Logger.hpp
     include/acs/util/Identity.hpp
     include/acs/proto/Protocol.hpp
+    include/acs/proto/PolymorphicMsgProtocol.hpp
     include/acs/conn/AsyncWriter.hpp
     include/acs/conn/AsyncReader.hpp
     include/acs/message/EchoHandler.hpp
+    include/acs/message/Message.hpp
+    include/acs/message/BaseMessage.hpp
+    include/acs/message/MessageRegistry.hpp
+    include/acs/message/MessageRegisterer.hpp
 )
 
 add_library(common ${COMMON_SRCS} ${COMMON_HDRS})

@@ -1,6 +1,6 @@
 #include "acs/proto/Protocol.hpp"
 #include "acs/util/Logger.hpp"
-#include "chat.pb.h"
+#include "echo.pb.h"
 #include <stdexcept>
 #include <cassert>
 
@@ -37,7 +37,7 @@ std::string Protocol::serialize(const MessageType &message/*, enum MessageType t
 Protocol::MessagePtr Protocol::deserialize(const void *data, int size) const {
     //TEMP hardcoded ECHO message type
     assert(_deserFramePrefixCache.type() == proto::FramePrefix::ECHO);
-    auto message = std::make_unique<proto::ChatPacket>();
+    auto message = std::make_unique<proto::EchoPacket>();
 
     if (!message->ParseFromArray(data, size)) {
         //util::Logger::instance().logError() << "ERR: Failed to parse chat message" << std::endl;
