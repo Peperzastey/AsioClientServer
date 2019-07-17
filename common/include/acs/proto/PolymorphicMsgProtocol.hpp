@@ -24,6 +24,7 @@ public:
         : _msgReg(msgRegistry), _PREFIX_SIZE(_calculatePrefixSize()) {}
 
     std::string serialize(const Message &message) const;
+    std::string serialize(const PacketType &packet, Message::TypeId type) const;
     /// Deserialize (parse) \a data into a \a Message(-derived class) object.
     /**
      * \param data buffer of size \a size containing the data to parse

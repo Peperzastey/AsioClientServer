@@ -19,10 +19,12 @@ void EchoCommandHandler::handleCommand(std::string_view commandString, CommandLo
     echoPacket.set_type(proto::EchoPacket::ECHO_REQUEST);
 
     //TEMP solution
+    //PROBLEMS HERE
     //message::EchoMessage message(proto::FramePrefix::ECHO, std::move(echoPacket));
-    auto msg = std::make_unique<message::EchoMessage>(proto::FramePrefix::ECHO, std::move(echoPacket));
-
-    client.send(*msg.get());
+    //class Empty {int stdoutWriter = 0;};
+    //auto msg = std::make_unique<message::EchoMessage<Empty>>(proto::FramePrefix::ECHO, std::move(echoPacket), Empty{});
+    //client.send(*msg.get());
+    client.send(echoPacket, proto::FramePrefix::ECHO);
 
     ++echoCommandId;
 }

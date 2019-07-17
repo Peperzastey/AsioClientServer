@@ -20,16 +20,17 @@ public:
     /**
      * \a MessageT type parameter must be a complete type.
      */
-    template <typename MessageT>
-    void registerMessageType(MessageTypeId msgTypeId) {
-        _registry.addMessageFactory(msgTypeId, [msgTypeId](const void *data, std::size_t size) {
+    template <typename MessageT, typename... CtorArgs>
+    void registerMessageType(MessageTypeId msgTypeId, CtorArgs&&... ctorArgs) {
+        //TODO capture: forward_as_tuple (std::tuple<..>) / std::ref ?
+        _registry.addMessageFactory(msgTypeId, [msgTypeId, ctorArgs.../*by copy*/](const void *data, std::size_t size) mutable {
             typename MessageT::Packet packet{};
             if (!packet.ParseFromArray(data, size)) {
                 throw std::runtime_error{"Wrong packet format. Parse failed. Packet type: " + packet.GetTypeName()};
             }
-            return std::make_unique<MessageT>(msgTypeId, std::move(packet));
+            return std::make_unique<MessageT>(msgTypeId, std::move(packet), std::move(ctorArgs)...);
         });
-        //TODO check return value?
+        //TODO check return value of addMessageFactory?
     }
 
 private:

@@ -1,6 +1,7 @@
 #include "acs/conn/AsyncTcpClient.hpp"
 #include "acs/util/Logger.hpp"
 #include "acs/message/EchoHandler.hpp"
+//#include "acs/context/ClientContext.hpp"
 #include <string>
 #include <array>
 #include <system_error>
@@ -54,6 +55,11 @@ void AsyncTcpClient::send(const Protocol::Message &message) {
     _writer.write(std::move(wireMessage));
 }
 
+void AsyncTcpClient::send(const Protocol::PacketType &packet, Protocol::Message::TypeId type) {
+    std::string wirePacket = _protocol->serialize(packet, type);
+    _writer.write(std::move(wirePacket));
+}
+
 void AsyncTcpClient::_handleConnect(const std::error_code &error) {
     if (error)
         throw std::system_error(error);
@@ -65,8 +71,8 @@ void AsyncTcpClient::_handleConnect(const std::error_code &error) {
 void AsyncTcpClient::_handleRead(const std::string &inputMessageData) {
     //TODO move deserialization to AsyncReader (or some AsyncReader-decorator/adaptor)
     auto message = _protocol->deserialize(inputMessageData.data(), inputMessageData.size());
-    //message::EchoHandler::handleClient(*message.get());
-    message->handle();
+
+    message->handle(0/*TEMP*/);
 }
 
 } // namespace acs::conn

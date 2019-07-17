@@ -3,6 +3,7 @@
 
 #include <asio/posix/stream_descriptor.hpp>
 #include "acs/conn/AsyncReader.hpp"
+#include "acs/conn/AsyncWriter.hpp"
 
 namespace asio {
 class io_context;
@@ -16,6 +17,8 @@ class AsyncCommandLoop {
 public:
     //using Client = conn::AsyncTcpClient;
     using Stream = asio::posix::stream_descriptor;
+    using Reader = conn::AsyncReader<Stream>;
+    using Writer = conn::AsyncWriter<Stream>;
 
 public:
     /// Create command loop and schedule it for asynchronous execution.
@@ -35,12 +38,17 @@ public:
         _handler = &handler;
     }
 
+    Writer& getWriter() noexcept { // inline
+        return _writer;
+    }
+
 private:
     //Client &_client;
     CommandDispatcher *_handler; // unique_ptr ?
     Stream _input;
     Stream _output;
-    conn::AsyncReader<Stream> _reader;
+    Reader _reader;
+    Writer _writer;
 };
 
 } // namespace acs::cmd

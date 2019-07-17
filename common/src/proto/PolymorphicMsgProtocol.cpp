@@ -22,6 +22,25 @@ std::string PolymorphicMsgProtocol::serialize(const Message &message) const {
     return output;
 }
 
+std::string PolymorphicMsgProtocol::serialize(const PacketType &packet, Message::TypeId type) const {
+    _serFramePrefixCache.Clear();
+    _serFramePrefixCache.set_size(packet.ByteSizeLong());
+    _serFramePrefixCache.set_type(type);
+
+    std::string output;
+    auto result = _serFramePrefixCache.SerializeToString(&output);
+    if (!result) {
+        throw std::runtime_error{"Failed to serialize frame prefix"};
+    }
+    result = packet.AppendToString(&output);
+    if (!result) {
+        throw std::runtime_error{"Failed to serialize packet. Packet type: " + packet.GetTypeName()};
+    }
+
+    assert(output.size() == _PREFIX_SIZE + _serFramePrefixCache.size());
+    return output;
+}
+
 /**
  * \pre getPacketSize must be called directly before calling this method
  * This method uses _deserFramePrefixCache value assigned in getPacketSize

@@ -51,6 +51,7 @@ public:
     void receiveInfinitely();
     
     void send(const Protocol::Message &message);
+    void send(const Protocol::PacketType &packet, Protocol::Message::TypeId type);
 
 public:
     /// Size of the receive buffer.

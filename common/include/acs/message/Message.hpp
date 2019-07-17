@@ -11,15 +11,15 @@ namespace acs::message {
  * Concrete Message types implement their handle() methods,
  * which the receiver of given message executes on reception.
  */
-//template <typename Sender>
 class Message {
 public:
     using TypeId = std::uint32_t;
+    using ContextId = std::size_t;
 
 public:
     // Non-virtual public interface
-    void handle(/*Sender &sender, Context &context*/) { // inline
-        _doHandle(/*sender*/);
+    void handle(ContextId contextId) { // inline
+        _doHandle(contextId);
     }
 
     void serializeAppendToString(std::string *appendOutput) const { // inline
@@ -32,7 +32,7 @@ public:
     virtual ~Message() = default;
 
 private:
-    virtual void _doHandle(/*Sender &sender*/) = 0;
+    virtual void _doHandle(ContextId contextId) = 0;
     virtual void _doSerializeAppendToString(std::string &str) const = 0;
 };
 

@@ -1,6 +1,7 @@
 #include "acs/message/MessageRegistry.hpp"
 #include "acs/message/MessageRegisterer.hpp"
 #include "acs/message/EchoMessage.hpp"
+#include "acs/context/ClientContext.hpp"
 #include "acs/proto/PolymorphicMsgProtocol.hpp"
 #include "acs/conn/AsyncTcpClient.hpp"
 #include "acs/cmd/AsyncCommandLoop.hpp"
@@ -13,6 +14,7 @@
 #include "framing.pb.h"
 
 using namespace acs;
+namespace ctx = ::acs::context;
 
 constexpr std::string_view DEFAULT_REMOTE_HOST = "::1";
 constexpr conn::AsyncTcpClient::port_t DEFAULT_REMOTE_PORT = 54321;
@@ -43,17 +45,19 @@ int main(int argc, char *argv[]) {
 
     try {
         message::MessageRegistry msgRegistry{};
-        message::MessageRegisterer msgRegisterer(msgRegistry);
-        //TODO encapsulate message types in separate domain class/struct
-        msgRegisterer.registerMessageType<message::EchoMessage>(proto::FramePrefix::ECHO);
-        //static_cast<message::MessageRegisterer::MessageTypeId>(proto::FramePrefix::ECHO)
-
         proto::PolymorphicMsgProtocol protocol(msgRegistry);
 
         conn::AsyncTcpClient tcpClient(context, protocol, remoteHost, remotePort);
         cmd::CommandDispatcher handler(tcpClient);
         cmd::AsyncCommandLoop loop(context, handler);
-        //tcpClient.receiveInfinitelyAsync(util::Logger::instance().log(), util::Logger::instance().logError()); // called callback in ctor
+
+        ctx::ClientContext clientContext{loop.getWriter()};
+
+        message::MessageRegisterer msgRegisterer(msgRegistry);
+        //TODO encapsulate message types in separate domain class/struct
+        msgRegisterer.registerMessageType<message::EchoMessage<ctx::ClientContext>>(proto::FramePrefix::ECHO, clientContext);
+
+        //tcpClient.receiveInfinitelyAsync(); // as callback in AsyncTcpClient ctor
         context.run();
     } catch (const std::system_error &err) {
         util::Logger::instance().logError() << "SYSTEM_ERROR CAUGHT:\n"

@@ -10,7 +10,8 @@ namespace acs::cmd {
 //TODO? use ::dup(STDIN/OUT_FILENO) ?
 //TODO add _writer and use it instead of Logger for command result output
 AsyncCommandLoop::AsyncCommandLoop(asio::io_context &ioContext, CommandDispatcher &handler)
-    : _handler(&handler), _input(ioContext, STDIN_FILENO), _output(ioContext, STDOUT_FILENO), _reader(_input) {
+    : _handler(&handler), _input(ioContext, STDIN_FILENO), _output(ioContext, STDOUT_FILENO), 
+      _reader(_input), _writer(_output) {
     run();
 }
 

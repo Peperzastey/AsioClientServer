@@ -5,19 +5,21 @@
 #include "acs/message/BaseMessage.hpp"
 #include "echo.pb.h"
 #include "acs/util/Logger.hpp"
+#include <sstream>
 
 namespace acs::message {
 
-//template <typename Sender>
+template <typename Context>
 class EchoMessage
-    : public Message/*<Sender>*/,
+    : public Message,
       private BaseMessage<proto::EchoPacket> {
 public:
-    using BaseMessage::BaseMessage;
+    //using BaseMessage::BaseMessage;
     using BaseMessage::Packet;
-    //EchoMessage(Message::TypeId typeId, Packet &&packet)
-    //    : BaseMessage(typeId, std::move(packet)) {}
-    //using Packet = BaseMessage::Packet;
+
+    EchoMessage(Message::TypeId typeId, Packet &&packet, Context &&context)
+        : BaseMessage(typeId, std::move(packet)),
+          _context(std::move(context)) {}
 
     TypeId getTypeId() const noexcept override {
         return _typeId;
@@ -27,9 +29,15 @@ public:
     }
 
 private:
-    void _doHandle(/*Sender &sender [[maybe_unused]]*/) override {
+    void _doHandle(ContextId contextId [[maybe_unused]]) override {
         //TEMP write to logger
-        _decodePacket(util::Logger::instance().log());
+        //TODO write to Output/Display-interface object
+        //TODO use _context
+        
+        //_decodePacket(util::Logger::instance().log());
+        std::ostringstream ostr{};
+        _decodePacket(ostr);
+        _context.stdoutWriter.write(ostr.str());
     }
 
     void _doSerializeAppendToString(std::string &str) const override {
@@ -52,6 +60,7 @@ private:
     //from BaseMessage:
     // proto::EchoPacket _packet;
     // TypeId _typeId;
+    Context _context;
 };
 
 } // namespace acs::message
