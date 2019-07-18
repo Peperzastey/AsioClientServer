@@ -20,6 +20,7 @@ public:
     using Message = message::Message;
 
 public:
+    //TODO? FramingProtocolType dependency injection
     explicit PolymorphicMsgProtocol(const message::MessageRegistry &msgRegistry)
         : _msgReg(msgRegistry), _PREFIX_SIZE(_calculatePrefixSize()) {}
 

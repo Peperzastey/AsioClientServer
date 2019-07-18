@@ -6,8 +6,8 @@
 
 namespace acs::conn {
 
-AsyncTcpServer::AsyncTcpServer(asio::io_context &ioContext, port_t portNumber, bool reuseAddress)
-    : _acceptor(ioContext) {
+AsyncTcpServer::AsyncTcpServer(asio::io_context &ioContext, Protocol &protocol, port_t portNumber, bool reuseAddress)
+    : _acceptor(ioContext), _protocol(&protocol) {
     asio::ip::tcp::endpoint endpoint(ipVersion(), portNumber);
     _acceptor.open(endpoint.protocol());
     if (reuseAddress)
@@ -23,7 +23,7 @@ AsyncTcpServer::AsyncTcpServer(asio::io_context &ioContext, port_t portNumber, b
  * \warning Not Thread-Safe !
  */
 void AsyncTcpServer::startAccept() {
-    auto& connection = _connManager.newConnection<echo::EchoClientHandler>(_acceptor.get_executor().context());
+    auto& connection = _connManager.newConnection<echo::EchoClientHandler>(_acceptor.get_executor().context(), *_protocol);
 
     _acceptor.async_accept(connection.getSocket(), [this, &connection](auto&&... params) {
         handleAccept(connection, std::forward<decltype(params)>(params)...);

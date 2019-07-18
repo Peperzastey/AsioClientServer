@@ -1,5 +1,8 @@
+#include "acs/message/MessageRegistry.hpp"
+#include "acs/message/MessageRegisterer.hpp"
+#include "acs/message/EchoMessage.hpp"
+#include "acs/proto/PolymorphicMsgProtocol.hpp"
 #include "acs/conn/AsyncTcpServer.hpp"
-//#include "acs/proto/Protocol.hpp"
 #include "acs/util/Logger.hpp"
 #include <asio/io_context.hpp>
 #include <system_error>
@@ -25,8 +28,13 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        //proto::Protocol protocol{};
-        conn::AsyncTcpServer tcpServer(context, /*protocol,*/ portNum);
+        message::MessageRegistry msgRegistry{};
+        proto::PolymorphicMsgProtocol protocol(msgRegistry);
+        message::MessageRegisterer msgRegisterer(msgRegistry);
+        //TODO encapsulate message types in separate domain class/struct
+        msgRegisterer.registerMessageType<message::EchoMessage>(proto::FramePrefix::ECHO);
+
+        conn::AsyncTcpServer tcpServer(context, protocol, portNum);
 
         util::Logger::instance().log() << "Server listening on port " << portNum << " on any interface."
             << std::endl;

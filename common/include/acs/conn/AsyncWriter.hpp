@@ -43,7 +43,7 @@ public:
 
 protected:
     //TODO move implementation to header file? (visibility for subclasses?)
-    void _handleWriteFinished(const std::error_code &error, std::size_t bytesTransferred) {
+    void _handleWriteFinished(const std::error_code &error, std::size_t bytesTransferred [[maybe_unused]]) {
         _writeInProgress = false;
         if (error == asio::error::eof) {
             //TODO invoke callback passed from caller

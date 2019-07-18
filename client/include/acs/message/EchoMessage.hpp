@@ -40,6 +40,9 @@ private:
         _context.stdoutWriter.write(ostr.str());
     }
 
+    /**
+     * \todo move to BaseMessage - make it Message subclass and inherit publicly
+     */
     void _doSerializeAppendToString(std::string &str) const override {
         if (!_packet.AppendToString(&str)) {
             //TODO get error/debug string from MessageLite

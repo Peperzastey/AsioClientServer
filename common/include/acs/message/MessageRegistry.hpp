@@ -32,7 +32,7 @@ public:
         return _mapping.at(msgTypeId);
     }
 
-    bool addMessageFactory(MessageTypeId msgTypeId, MessageFactory &&factory) {
+    bool addMessageFactory(const MessageTypeId &msgTypeId, MessageFactory &&factory) {
         auto [iter, success] = _mapping.try_emplace(msgTypeId, std::move(factory));
         (void)iter;
         return success;

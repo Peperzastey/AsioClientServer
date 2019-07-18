@@ -67,7 +67,7 @@ std::size_t PolymorphicMsgProtocol::_calculatePrefixSize() const {
     _serFramePrefixCache.set_type(1);
     assert(_serFramePrefixCache.IsInitialized());
     auto prefixSize = _serFramePrefixCache.ByteSizeLong();
-    _serFramePrefixCache.Clear();  
+    _serFramePrefixCache.Clear();
     return prefixSize;
 }
 

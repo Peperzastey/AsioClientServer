@@ -1,7 +1,5 @@
 #include "acs/conn/AsyncTcpClient.hpp"
 #include "acs/util/Logger.hpp"
-#include "acs/message/EchoHandler.hpp"
-//#include "acs/context/ClientContext.hpp"
 #include <string>
 #include <array>
 #include <system_error>
@@ -16,23 +14,8 @@
 
 namespace acs::conn {
 
-/*std::size_t AsyncTcpClient::_FRAME_PREFIX_SIZE = 0;
-
-void AsyncTcpClient::_initializeFramingProtocol() {
-    static bool alreadyInitialized = false;
-
-    if (!alreadyInitialized) {
-        proto::FramePrefix initDummy{};
-        initDummy.set_size(1);
-        _FRAME_PREFIX_SIZE = initDummy.ByteSizeLong();
-
-        alreadyInitialized = true;
-    }
-}*/
-
 AsyncTcpClient::AsyncTcpClient(asio::io_context &ioContext, Protocol &protocol, std::string_view remoteHost, port_t remotePort)
     : _socket(ioContext), _protocol(&protocol), _writer(_socket), _reader(_socket) {
-    //_initializeFramingProtocol();
     asio::ip::tcp::endpoint remote(asio::ip::make_address(remoteHost), remotePort);
     _socket.async_connect(remote, [this](auto&&... params) {
         _handleConnect(std::forward<decltype(params)>(params)...);
@@ -72,7 +55,7 @@ void AsyncTcpClient::_handleRead(const std::string &inputMessageData) {
     //TODO move deserialization to AsyncReader (or some AsyncReader-decorator/adaptor)
     auto message = _protocol->deserialize(inputMessageData.data(), inputMessageData.size());
 
-    message->handle(0/*TEMP*/);
+    message->handle(0);
 }
 
 } // namespace acs::conn

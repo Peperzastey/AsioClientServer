@@ -5,6 +5,7 @@ set(SERVER_SRCS
     src/conn/TcpConnection.cpp
     src/echo/EchoClientHandler.cpp
     src/debug/TestClientHandler.cpp  
+    src/message/EchoMessage.cpp
 )
 set(SERVER_HDRS
     include/acs/conn/AsyncTcpServer.hpp
@@ -14,6 +15,9 @@ set(SERVER_HDRS
     include/acs/logic/ClientHandler.hpp
     include/acs/echo/EchoClientHandler.hpp
     include/acs/debug/TestClientHandler.hpp
+    include/acs/context/ContextResolver.hpp
+    include/acs/context/ConnectionContext.hpp
+    include/acs/message/EchoMessage.hpp
 )
 
 add_executable(server ${SERVER_SRCS} ${SERVER_HDRS})

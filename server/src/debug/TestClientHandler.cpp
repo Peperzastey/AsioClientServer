@@ -2,6 +2,7 @@
 #include "acs/conn/TcpConnection.hpp"
 #include "acs/util/Logger.hpp"
 #include "chat.pb.h"
+#include "framing.pb.h"
 #include <utility>
 
 namespace acs::debug {
@@ -13,15 +14,7 @@ void TestClientHandler::handleStart() {
     message.set_text("Test text\nNext test line.\n");
     message.set_type(ChatPacket::NORMAL);
 
-    std::string output;
-    auto result = message.SerializeToString(&output);
-    if (!result) {
-        util::Logger::instance().logError() << "Failed to serialize chat message" << std::endl;
-        //TODO throw exception
-        return;
-    }
-
-    _connection->send(std::move(output));
+    _connection->send(message, proto::FramePrefix::CHAT);
 }
 
 void TestClientHandler::handleSendComplete() {

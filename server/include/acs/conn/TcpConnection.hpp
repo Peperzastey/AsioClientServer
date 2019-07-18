@@ -5,11 +5,14 @@
 #define ACS_TCPCONNECTION_HPP__
 
 #include "acs/conn/ConnectionStateListener.hpp"
-#include "acs/proto/Protocol.hpp"
+#include "acs/proto/PolymorphicMsgProtocol.hpp"
 #include "acs/logic/ClientHandler.hpp"
+#include "acs/conn/AsyncWriter.hpp"
 #include "acs/conn/AsyncReader.hpp"
 #include "acs/util/Logger.hpp"
 #include "acs/util/Identity.hpp"
+#include "acs/context/ConnectionContext.hpp"
+#include "acs/context/ContextResolver.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -27,15 +30,24 @@ namespace acs::conn {
 /// Represents server-side part of a TCP connection.
 class TcpConnection {
 public:
+    using Protocol = proto::PolymorphicMsgProtocol;
+    using Socket = asio::ip::tcp::socket;
+
+public:
     /// Constructor.
     /**
      * \param ioContext IO Context of the Application object
      * \param responseFactory object of type response_factory_func_t used to create response to a request provided
      */
     template <typename ClientHandlerT>
-    TcpConnection(asio::io_context &ioContext, ConnectionStateListener &observer, util::Identity<ClientHandlerT> handlerType)
-        : _socket(ioContext), _id(_generateConnId()), _reader(_socket),
-          _handler(std::make_unique<typename decltype(handlerType)::type>(*this)), _observer(observer) {}
+    TcpConnection(asio::io_context &ioContext, Protocol &protocol, ConnectionStateListener &observer, util::Identity<ClientHandlerT> handlerType)
+        : _socket(ioContext), _id(_generateConnId()), _writer(_socket), _reader(_socket),
+          _handler(std::make_unique<typename decltype(handlerType)::type>(*this)), _protocol(&protocol),
+          _contextId(context::generateNewContextId()), _observer(observer) {
+        // register ConnectionContext for Message handlers
+        auto&& connCtxResolver = context::ContextResolver<context::ConnectionContext>::instance();
+        connCtxResolver.addNewContextInstance(_contextId, *this);
+    }
     // implement by hand - bool _writeInProgress, size_t _id, ... need to be copied (built-in type)
     // thus move ctor is temporarily disabled
     //TcpConnection(TcpConnection&&) = default;
@@ -48,15 +60,12 @@ public:
     void start();
     /// Close the connection.
     void close();
-    /// Send the \a message to the connected client.
-    /**
-     * \todo add Async to the names
-     */
-    void send(const std::string &message /*, TODO WritePolicy policy = QueueWrite*/);
-    void send(std::string &&message /*, WritePolicy policy = QueueWrite*/);
+    
+    /*, TODO WritePolicy policy = QueueWrite*/
+    void send(const Protocol::PacketType &packet, Protocol::Message::TypeId type);
 
     /// Get server-side endpoint socket of this TcpConnection.
-    asio::ip::tcp::socket& getSocket() noexcept {
+    Socket& getSocket() noexcept {
         return _socket;
     }
     /// Get connection id.
@@ -64,16 +73,8 @@ public:
         return _id;
     }
     /// Get protocol object.
-    const proto::Protocol& getProtocol() const noexcept {
-        return _protocol;
-    }
-
-    /// Set message descriptor fixed wire-size.
-    /**
-     * \note Must be set before invoking any \a receive method.
-     */
-    static void setMessageDescriptorSize(std::size_t size) noexcept {
-        _MESSAGE_DESCR_SIZE = size;
+    const Protocol& getProtocol() const noexcept {
+        return *_protocol;
     }
 
 public:
@@ -86,38 +87,28 @@ public:
     }
 
 protected:
-    void _handleWrite(const std::error_code &error, std::size_t bytesSend);
     void _handleRead(const std::string &inputMessageData);
 
 private:
     static std::size_t _generateConnId();
     /// Start receive infinite loop.
     void _startReceive();
-    void _doSend(/*WritePolicy*/);
 
 private:
     /// Socket representing the server-side connection endpoint.
-    asio::ip::tcp::socket _socket;
+    Socket _socket;
     /// Identifies the connection.
     std::size_t _id;
+    /// Writer.
+    conn::AsyncWriter<Socket> _writer;
     /// Reader.
-    conn::AsyncReader<asio::ip::tcp::socket> _reader;
+    conn::AsyncReader<Socket> _reader;
     /// Client-server interaction handler.
     std::unique_ptr<logic::ClientHandler> _handler;
     /// Protocol object.
-    proto::Protocol _protocol;
-    /// Message to send to the connected peer.
-    /**
-     * Holds the message until it is (asynchronously) sent.
-     */
-    mutable std::string _sendMsg;
-    /// Indicates whether there is a compound write operation (see: Asio) currently in progress.
-    /**
-     * No other write operation on the same stream (socket) can interleave with any other compound operation.
-     */
-    mutable /*atomic*/ bool _writeInProgress = false;
-    /// Message descriptor (framing protocol for ChatPacket) fixed wire-size.
-    static std::size_t _MESSAGE_DESCR_SIZE;
+    Protocol *_protocol;
+    /// Context id for this connection.
+    context::ContextId _contextId;
 
 protected:
     /// State changes observer.

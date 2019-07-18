@@ -60,14 +60,6 @@ public:
 protected:
     void _handleConnect(const std::error_code &error);
     void _handleRead(const std::string &inputMessageData);
-    static std::string _decodeMessage(const proto::ChatPacket &message);
-
-private:
-    /// Initialize framing protocol.
-    /**
-     * Must be called before any \a receive method.
-     */
-    static void _initializeFramingProtocol();
 
 private:
     /// Client-side endpoint socket.
@@ -76,9 +68,6 @@ private:
     Protocol *_protocol;
     conn::AsyncWriter<Socket> _writer;
     conn::AsyncReader<Socket> _reader;
-    /// Framing protocol prefix size in bytes.
-    //static std::size_t _FRAME_PREFIX_SIZE;
-
 };
 
 } // namespace acs::conn

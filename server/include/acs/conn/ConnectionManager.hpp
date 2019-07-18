@@ -13,6 +13,10 @@ namespace asio {
 class io_context;
 } // namespace asio
 
+namespace acs::proto {
+class PolymorphicMsgProtocol;
+} // namespace acs::prot
+
 namespace acs::conn {
 
 /// Manages and holds owership of the connections.
@@ -27,9 +31,9 @@ public:
      * \return created connection
      */
     template <typename ClientHandlerT>
-    Connection& newConnection(asio::io_context &ioContext) {
+    Connection& newConnection(asio::io_context &ioContext, proto::PolymorphicMsgProtocol &protocol) {
         //return _connections.emplace_back<ClientHandlerT>(ioContext, *this); ???try?
-        return _connections.emplace_back(ioContext, *this, util::Identity<ClientHandlerT>{});
+        return _connections.emplace_back(ioContext, protocol, *this, util::Identity<ClientHandlerT>{});
         // Connection newConn(ioContext, *this, util::Identity<ClientHandlerT>{});
         // _connections.push_back(std::move(newConn));
         // return _connections.back();
